@@ -987,24 +987,20 @@ fn build_shim(
 
 fn extra_bindgen_clang_args(pg_config: &PgConfig) -> eyre::Result<Vec<String>> {
     let mut out = vec![];
+    let flags = shlex::split(&pg_config.cppflags()?.to_string_lossy()).unwrap_or_default();
+    // Just give clang the full flag set, since presumably that's what we're
+    // getting when we build the C shim anyway.
+    out.extend(flags.iter().cloned());
     if env_tracked("CARGO_CFG_TARGET_OS").as_deref() == Some("macos") {
-        // On macOS, find the `-isysroot` arg out of the c preprocessor flags,
-        // to handle the case where bindgen uses a libclang isn't provided by
-        // the system.
-        let flags = pg_config.cppflags()?;
-        // In practice this will always be valid UTF-8 because of how the
-        // `pgrx-pg-config` crate is implemented, but even if it were not, the
-        // problem won't be with flags we are interested in.
-        let flags = shlex::split(&flags.to_string_lossy()).unwrap_or_default();
-        // Just give clang the full flag set, since presumably that's what we're
-        // getting when we build the C shim anyway.
-        out.extend(flags.iter().cloned());
-
         // Find the `-isysroot` flags so we can warn about them, so something
         // reasonable shows up if/when the build fails.
         //
-        // Eventually we should probably wrangle the sysroot for `cargo pgrx
-        // init`-installed PGs a bit more aggressively, but for now, whatever.
+        // TODO(thom): Could probably fix some brew/xcode issues here in the
+        // Find the `-isysroot` flags so we can warn about them, so something
+        // reasonable shows up if/when the build fails.
+        //
+        // - Handle homebrew packages initially linked against as keg-only, but
+        //   which have had their version bumped.
         for pair in flags.windows(2) {
             if pair[0] == "-isysroot" {
                 if !std::path::Path::new(&pair[1]).exists() {
