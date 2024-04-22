@@ -1895,6 +1895,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "shlex",
  "sysinfo",
  "thiserror 2.0.11",
  "trybuild",

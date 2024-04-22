@@ -546,7 +546,31 @@ fn start_pg(loglines: LogLines) -> eyre::Result<String> {
         cmd.arg(postmaster_path);
         cmd
     } else if let Some(runas) = get_runas() {
+        #[inline]
+        fn accept_envar(var: &str) -> bool {
+            // taken from https://doc.rust-lang.org/cargo/reference/environment-variables.html
+            var.starts_with("CARGO")
+                || var.starts_with("RUST")
+                || var.starts_with("DEP_")
+                || ["OUT_DIR", "TARGET", "HOST", "NUM_JOBS", "OPT_LEVEL", "DEBUG", "PROFILE"]
+                    .contains(&var)
+        }
+
         let mut cmd = sudo_command(runas);
+
+        // when running the `postmaster` process via `sudo`, we need to copy the cargo/rust-related
+        // environment variables and pass as arguments to sudo, ahead of the `postmaster` command itself
+        //
+        // This ensures that any in-processs #[pg_test]s that might otherwise expect some kind of
+        // `CARGO_xxx` envar to actually exist.
+        for (var, value) in std::env::vars() {
+            if accept_envar(&var) {
+                let env_as_arg = format!("{var}={}", shlex::try_quote(&value)?);
+                cmd.arg(env_as_arg);
+            }
+        }
+
+        // now we can add the `postmaster` as the command for `sudo` to execute
         cmd.arg(postmaster_path);
         cmd
     } else {
