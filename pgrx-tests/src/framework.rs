@@ -561,7 +561,7 @@ fn start_pg(loglines: LogLines) -> eyre::Result<String> {
         // when running the `postmaster` process via `sudo`, we need to copy the cargo/rust-related
         // environment variables and pass as arguments to sudo, ahead of the `postmaster` command itself
         //
-        // This ensures that in-processs #[pg_test]s will see the `CARGO_xxx` envars they expect
+        // This ensures that in-process #[pg_test]s will see the `CARGO_xxx` envars they expect
         for (var, value) in std::env::vars() {
             if accept_envar(&var) {
                 let env_as_arg = format!("{var}={}", shlex::try_quote(&value)?);
