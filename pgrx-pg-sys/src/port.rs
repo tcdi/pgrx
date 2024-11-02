@@ -424,7 +424,7 @@ pub unsafe fn PageIsValid(page: pg_sys::Page) -> bool {
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
 pub const fn SizeOfPageHeaderData() -> usize {
     // #define SizeOfPageHeaderData (offsetof(PageHeaderData, pd_linp))
-    std::mem::size_of::<pg_sys::PageHeaderData>() - std::mem::size_of::<pg_sys::ItemIdData>()
+    core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp)
 }
 
 #[allow(non_snake_case)]
