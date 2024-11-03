@@ -401,7 +401,6 @@ pub unsafe fn BufferGetPageSize(_buffer: pg_sys::Buffer) -> pg_sys::Size {
     pg_sys::BLCKSZ as pg_sys::Size
 }
 
-
 #[allow(non_snake_case)]
 #[inline(always)]
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
@@ -422,19 +421,13 @@ pub unsafe fn PageIsValid(page: pg_sys::Page) -> bool {
 #[allow(non_snake_case)]
 #[inline(always)]
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
-pub const fn SizeOfPageHeaderData() -> usize {
-    // #define SizeOfPageHeaderData (offsetof(PageHeaderData, pd_linp))
-    core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp)
-}
-
-#[allow(non_snake_case)]
-#[inline(always)]
-#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
 pub unsafe fn PageIsEmpty(page: pg_sys::Page) -> bool {
     // #define PageIsEmpty(page) \
     // (((PageHeader) (page))->pd_lower <= SizeOfPageHeaderData)
+    const SizeOfPageHeaderData: pg_sys::Size =
+        core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp);
     let page_header = page as *mut pg_sys::PageHeaderData;
-    (*page_header).pd_lower <= SizeOfPageHeaderData() as u16
+    (*page_header).pd_lower <= SizeOfPageHeaderData as u16
 }
 
 #[allow(non_snake_case)]
@@ -449,10 +442,7 @@ pub unsafe fn PageIsNew(page: pg_sys::Page) -> bool {
 #[allow(non_snake_case)]
 #[inline(always)]
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
-pub unsafe fn PageGetItemId(
-    page: pg_sys::Page,
-    offset: pg_sys::OffsetNumber,
-) -> pg_sys::ItemId {
+pub unsafe fn PageGetItemId(page: pg_sys::Page, offset: pg_sys::OffsetNumber) -> pg_sys::ItemId {
     // #define PageGetItemId(page, offsetNumber) \
     // ((ItemId) (&((PageHeader) (page))->pd_linp[(offsetNumber) - 1]))
     let page_header = page as *mut pg_sys::PageHeaderData;
@@ -465,7 +455,9 @@ pub unsafe fn PageGetItemId(
 pub unsafe fn PageGetContents(page: pg_sys::Page) -> *mut ::core::ffi::c_char {
     // #define PageGetContents(page) \
     // ((char *) (page) + MAXALIGN(SizeOfPageHeaderData))
-    page.add(pg_sys::MAXALIGN(SizeOfPageHeaderData()) as usize) as *mut ::core::ffi::c_char
+    const SizeOfPageHeaderData: pg_sys::Size =
+        core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp);
+    page.add(pg_sys::MAXALIGN(SizeOfPageHeaderData) as usize) as *mut ::core::ffi::c_char
 }
 
 #[allow(non_snake_case)]
@@ -542,11 +534,13 @@ pub unsafe fn PageGetMaxOffsetNumber(page: pg_sys::Page) -> pg_sys::OffsetNumber
     // #define PageGetMaxOffsetNumber(page) \
     // (((PageHeader) (page))->pd_lower <= SizeOfPageHeaderData ? 0 : \
     // ((((PageHeader) (page))->pd_lower - SizeOfPageHeaderData) / sizeof(ItemIdData)))
+    const SizeOfPageHeaderData: pg_sys::Size =
+        core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp);
     let page_header = page as *mut pg_sys::PageHeaderData;
-    if (*page_header).pd_lower <= SizeOfPageHeaderData() as u16 {
+    if (*page_header).pd_lower <= SizeOfPageHeaderData as u16 {
         0
     } else {
-        ((*page_header).pd_lower - SizeOfPageHeaderData() as u16)
+        ((*page_header).pd_lower - SizeOfPageHeaderData as u16)
             / std::mem::size_of::<pg_sys::ItemIdData>() as u16
     }
 }
