@@ -1496,6 +1496,7 @@ dependencies = [
  "heapless",
  "libc",
  "once_cell",
+ "paste",
  "pgrx-macros",
  "pgrx-pg-sys",
  "pgrx-sql-entity-graph",

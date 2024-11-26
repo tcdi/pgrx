@@ -14,7 +14,8 @@ use pgrx_pg_sys::PgTryBuilder;
 use std::panic::AssertUnwindSafe;
 
 use crate::memcx;
-use crate::pg_catalog::pg_proc::{PgProc, ProArgMode, ProKind};
+use crate::pg_catalog::PgProc;
+use crate::pg_catalog::{PgProcProargmodes, PgProcProkind};
 use crate::seal::Sealed;
 use crate::{
     direct_function_call, is_a, list::List, pg_sys, pg_sys::AsPgCStr, Array, FromDatum, IntoDatum,
@@ -205,18 +206,22 @@ pub fn fn_call_with_collation<R: FromDatum + IntoDatum>(
     let func_oid = lookup_fn(fname, args)?;
 
     // lookup the function's pg_proc entry and do some validation
-    let pg_proc = PgProc::new(func_oid).ok_or(FnCallError::UndefinedFunction)?;
+    let pg_proc = PgProc::search_procoid(func_oid).ok_or(FnCallError::UndefinedFunction)?;
+    let pg_proc = pg_proc.get().ok_or(FnCallError::UndefinedFunction)?;
     let retoid = pg_proc.prorettype();
 
     //
     // do some validation to catch the cases we don't/can't directly call
     //
 
-    if !matches!(pg_proc.prokind(), ProKind::Function) {
+    if !matches!(pg_proc.prokind(), PgProcProkind::Function) {
         // It only makes sense to directly call regular functions.  Calling aggregate or window
         // functions is nonsensical
         return Err(FnCallError::UnsupportedFunctionType);
-    } else if pg_proc.proargmodes().iter().any(|mode| *mode != ProArgMode::In) {
+    } else if pg_proc
+        .proargmodes()
+        .map_or(false, |x| x.iter_deny_null().any(|mode| mode != PgProcProargmodes::In))
+    {
         // Right now we only know how to support arguments with the IN mode.  Perhaps in the
         // future we can support IN_OUT and TABLE return types
         return Err(FnCallError::UnsupportedArgumentModes);
@@ -240,7 +245,7 @@ pub fn fn_call_with_collation<R: FromDatum + IntoDatum>(
         .iter()
         .enumerate()
         .map(|(i, a)| a.as_datum(&pg_proc, i))
-        .chain((args.len()..pg_proc.pronargs()).map(|i| create_default_value(&pg_proc, i)))
+        .chain((args.len()..pg_proc.pronargs() as usize).map(|i| create_default_value(&pg_proc, i)))
         .map(|datum| {
             null |= matches!(datum, Ok(None));
             datum
@@ -276,7 +281,7 @@ pub fn fn_call_with_collation<R: FromDatum + IntoDatum>(
         //
         // SAFETY: we allocate enough zeroed space for the base FunctionCallInfoBaseData *plus* the number of arguments
         // we have, and we've asserted that we have the correct number of arguments
-        assert_eq!(nargs, pg_proc.pronargs());
+        assert_eq!(nargs, pg_proc.pronargs() as usize);
         let fcinfo = pg_sys::palloc0(
             std::mem::size_of::<pg_sys::FunctionCallInfoBaseData>()
                 + std::mem::size_of::<pg_sys::NullableDatum>() * nargs,
@@ -433,7 +438,7 @@ fn parse_sql_ident(ident: &str) -> Result<Array<&str>> {
 /// - [`FnCallError::NotDefaultArgument`] if the specified `argnum` does not have a `DEFAULT` clause
 /// - [`FnCallError::DefaultNotConstantExpression`] if the `DEFAULT` clause is one we cannot evaluate
 fn create_default_value(pg_proc: &PgProc, argnum: usize) -> Result<Option<pg_sys::Datum>> {
-    let non_default_args_cnt = pg_proc.pronargs() - pg_proc.pronargdefaults();
+    let non_default_args_cnt = (pg_proc.pronargs() - pg_proc.pronargdefaults()) as usize;
     if argnum < non_default_args_cnt {
         return Err(FnCallError::NotDefaultArgument(argnum));
     }

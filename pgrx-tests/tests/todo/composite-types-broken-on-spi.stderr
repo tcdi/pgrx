@@ -59,32 +59,32 @@ note: required by a bound in `pgrx::callconv::Args::<'a, 'fcx>::next_arg_uncheck
    |                                         ^^^^^^^^^^^^ required by this bound in `Args::<'a, 'fcx>::next_arg_unchecked`
    = note: this error originates in the attribute macro `pg_extern` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
+error[E0277]: `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
    --> tests/todo/composite-types-broken-on-spi.rs:125:20
     |
 125 |         for dog in dogs {
-    |                    ^^^^ `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
+    |                    ^^^^ `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
     |
-    = help: the trait `IntoIterator` is not implemented for `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
-    = help: the trait `IntoIterator` is implemented for `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
+    = help: the trait `IntoIterator` is not implemented for `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
+    = help: the trait `IntoIterator` is implemented for `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
 
-error[E0277]: `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
+error[E0277]: `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
    --> tests/todo/composite-types-broken-on-spi.rs:145:20
     |
 145 |         for dog in dogs {
-    |                    ^^^^ `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
+    |                    ^^^^ `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
     |
-    = help: the trait `IntoIterator` is not implemented for `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
-    = help: the trait `IntoIterator` is implemented for `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
+    = help: the trait `IntoIterator` is not implemented for `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
+    = help: the trait `IntoIterator` is implemented for `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
 
-error[E0277]: `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
+error[E0277]: `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
    --> tests/todo/composite-types-broken-on-spi.rs:162:20
     |
 162 |         for dog in dogs {
-    |                    ^^^^ `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
+    |                    ^^^^ `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>` is not an iterator
     |
-    = help: the trait `IntoIterator` is not implemented for `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
-    = help: the trait `IntoIterator` is implemented for `Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
+    = help: the trait `IntoIterator` is not implemented for `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
+    = help: the trait `IntoIterator` is implemented for `pgrx::Array<'_, pgrx::prelude::PgHeapTuple<'_, pgrx::AllocatedByRust>>`
 
 error[E0308]: mismatched types
   --> tests/todo/composite-types-broken-on-spi.rs:11:5

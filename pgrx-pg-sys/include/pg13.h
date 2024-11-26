@@ -56,6 +56,7 @@
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"

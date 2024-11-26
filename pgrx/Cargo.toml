@@ -63,6 +63,7 @@ bitflags = "2.4.0" # BackgroundWorker
 bitvec = "1.0" # processing array nullbitmaps
 heapless = "0.8" # shmem and PgLwLock
 libc.workspace = true # FFI type compat
+paste = "1.0.14"
 seahash = "4.1.0" # derive(PostgresHash)
 serde.workspace = true # impls on pub types
 serde_cbor = "0.11.2" # derive(PostgresType)
