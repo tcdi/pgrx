@@ -386,7 +386,7 @@ fn copy_sql_files(
     )?;
 
     // now copy all the version upgrade files too
-    if let Ok(dir) = fs::read_dir("sql/") {
+    if let Ok(dir) = fs::read_dir(package_manifest_path.as_ref().parent().unwrap().join("sql/")) {
         for sql in dir.flatten() {
             let filename = sql.file_name().into_string().unwrap();
 
