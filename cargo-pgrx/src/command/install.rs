@@ -184,16 +184,12 @@ pub(crate) fn install_extension(
         };
         // Since Postgres 16, the shared library extension on macOS is `dylib`, not `so`.
         // Ref https://github.com/postgres/postgres/commit/b55f62abb2c2e07dfae99e19a2b3d7ca9e58dc1a
-        let so_ext = 'e: {
-            if cfg!(target_os = "macos") {
-                break 'e if pg_config.major_version().unwrap() >= 16 { "dylib" } else { "so" };
-            }
-            if cfg!(target_os = "windows") {
-                break 'e "dll";
-            }
-            "so"
+        let so_suffix = if cfg!(target_os = "macos") && pg_config.major_version().unwrap() < 16 {
+            ".so"
+        } else {
+            std::env::consts::DLL_SUFFIX
         };
-        let filename = format!("{so_name}.{so_ext}");
+        let filename = format!("{so_name}{so_suffix}");
 
         let dest = pkglibdir.join(filename);
 
@@ -408,18 +404,11 @@ pub(crate) fn find_library_file(
     manifest: &Manifest,
     build_command_messages: &Vec<CargoMessage>,
 ) -> eyre::Result<PathBuf> {
+    use std::env::consts::{DLL_EXTENSION, DLL_SUFFIX};
+
     // cargo sometimes decides to change whether targets are kebab-case or snake_case in metadata,
     // so normalize away the difference
     let target_name = manifest.target_name()?.replace('-', "_");
-    let so_ext = 'so_ext: {
-        if cfg!(target_os = "macos") {
-            break 'so_ext "dylib";
-        }
-        if cfg!(target_os = "windows") {
-            break 'so_ext "dll";
-        }
-        "so"
-    };
 
     // no hard and fast rule for the lib.so output filename exists, so we implement this routine
     // which is essentially a cope for cargo's disinterest in writing down any docs so far.
@@ -437,11 +426,11 @@ pub(crate) fn find_library_file(
             artifact
                 .filenames
                 .iter()
-                .find(|filename| filename.extension() == Some(so_ext))
+                .find(|filename| filename.extension() == Some(DLL_EXTENSION))
                 .map(|filename| filename.to_string())
         })
         .ok_or_else(|| {
-            eyre!("Could not get shared object file `{target_name}.{so_ext}` from Cargo output.")
+            eyre!("Could not get shared object file `{target_name}{DLL_SUFFIX}` from Cargo output.")
         })?;
     let library_file_path = PathBuf::from(library_file);
 

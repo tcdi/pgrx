@@ -12,6 +12,7 @@ use eyre::{eyre, WrapErr};
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
+use std::env::consts::EXE_SUFFIX;
 use std::ffi::OsString;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::io::ErrorKind;
@@ -334,55 +335,37 @@ impl PgConfig {
 
     pub fn postmaster_path(&self) -> eyre::Result<PathBuf> {
         let mut path = self.bin_dir()?;
-        #[cfg(not(target_os = "windows"))]
-        path.push("postgres");
-        #[cfg(target_os = "windows")]
-        path.push("postgres.exe");
+        path.push(format!("postgres{EXE_SUFFIX}"));
         Ok(path)
     }
 
     pub fn initdb_path(&self) -> eyre::Result<PathBuf> {
         let mut path = self.bin_dir()?;
-        #[cfg(not(target_os = "windows"))]
-        path.push("initdb");
-        #[cfg(target_os = "windows")]
-        path.push("initdb.exe");
+        path.push(format!("initdb{EXE_SUFFIX}"));
         Ok(path)
     }
 
     pub fn createdb_path(&self) -> eyre::Result<PathBuf> {
         let mut path = self.bin_dir()?;
-        #[cfg(not(target_os = "windows"))]
-        path.push("createdb");
-        #[cfg(target_os = "windows")]
-        path.push("createdb.exe");
+        path.push(format!("createdb{EXE_SUFFIX}"));
         Ok(path)
     }
 
     pub fn dropdb_path(&self) -> eyre::Result<PathBuf> {
         let mut path = self.bin_dir()?;
-        #[cfg(not(target_os = "windows"))]
-        path.push("dropdb");
-        #[cfg(target_os = "windows")]
-        path.push("dropdb.exe");
+        path.push(format!("dropdb{EXE_SUFFIX}"));
         Ok(path)
     }
 
     pub fn pg_ctl_path(&self) -> eyre::Result<PathBuf> {
         let mut path = self.bin_dir()?;
-        #[cfg(not(target_os = "windows"))]
-        path.push("pg_ctl");
-        #[cfg(target_os = "windows")]
-        path.push("pg_ctl.exe");
+        path.push(format!("pg_ctl{EXE_SUFFIX}"));
         Ok(path)
     }
 
     pub fn psql_path(&self) -> eyre::Result<PathBuf> {
         let mut path = self.bin_dir()?;
-        #[cfg(not(target_os = "windows"))]
-        path.push("psql");
-        #[cfg(target_os = "windows")]
-        path.push("psql.exe");
+        path.push(format!("psql{EXE_SUFFIX}"));
         Ok(path)
     }
 
