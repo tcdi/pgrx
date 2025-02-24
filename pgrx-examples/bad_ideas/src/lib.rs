@@ -87,7 +87,11 @@ fn http(url: &str) -> String {
     let mut response =
         ureq::Agent::new_with_defaults().get(url).call().expect("invalid http response");
     let mut buf = Vec::new();
-    let _count = response.body_mut().as_reader().read_to_end(&mut buf)?;
+    let _count = response
+        .body_mut()
+        .as_reader()
+        .read_to_end(&mut buf)
+        .expect("should be able to read body from the response");
     String::from_utf8_lossy(&buf).into_owned()
 }
 
