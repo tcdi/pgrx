@@ -389,4 +389,176 @@ pub unsafe fn MemoryContextSwitchTo(context: crate::MemoryContext) -> crate::Mem
     old
 }
 
-pub use crate::PGERROR as ERROR;
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn BufferGetPageSize(buffer: pg_sys::Buffer) -> pg_sys::Size {
+    // #define BufferGetPageSize(buffer) \
+    // ( \
+    //     AssertMacro(BufferIsValid(buffer)), \
+    //     (Size)BLCKSZ \
+    // )
+    assert!(BufferIsValid(buffer));
+    pg_sys::BLCKSZ as pg_sys::Size
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn ItemIdGetOffset(item_id: pg_sys::ItemId) -> u32 {
+    // #define ItemIdGetOffset(itemId) \
+    // ((itemId)->lp_off)
+    (*item_id).lp_off()
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageIsValid(page: pg_sys::Page) -> bool {
+    // #define PageIsValid(page) PointerIsValid(page)
+    !page.is_null()
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageIsEmpty(page: pg_sys::Page) -> bool {
+    // #define PageIsEmpty(page) \
+    // (((PageHeader) (page))->pd_lower <= SizeOfPageHeaderData)
+    const SizeOfPageHeaderData: pg_sys::Size =
+        core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp);
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    (*page_header).pd_lower <= SizeOfPageHeaderData as u16
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageIsNew(page: pg_sys::Page) -> bool {
+    // #define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    (*page_header).pd_upper == 0
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetItemId(page: pg_sys::Page, offset: pg_sys::OffsetNumber) -> pg_sys::ItemId {
+    // #define PageGetItemId(page, offsetNumber) \
+    // ((ItemId) (&((PageHeader) (page))->pd_linp[(offsetNumber) - 1]))
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    (*page_header).pd_linp.as_mut_ptr().add(offset as usize - 1)
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetContents(page: pg_sys::Page) -> *mut ::core::ffi::c_char {
+    // #define PageGetContents(page) \
+    // ((char *) (page) + MAXALIGN(SizeOfPageHeaderData))
+    const SizeOfPageHeaderData: pg_sys::Size =
+        core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp);
+    page.add(pg_sys::MAXALIGN(SizeOfPageHeaderData) as usize) as *mut ::core::ffi::c_char
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub fn PageSizeIsValid(page_size: usize) -> bool {
+    // #define PageSizeIsValid(pageSize) ((pageSize) == BLCKSZ)
+    page_size == pg_sys::BLCKSZ as usize
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetPageSize(page: pg_sys::Page) -> usize {
+    // #define PageGetPageSize(page) \
+    // ((Size) (((PageHeader) (page))->pd_pagesize_version & (uint16) 0xFF00))
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    ((*page_header).pd_pagesize_version & 0xFF00) as usize
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetPageLayoutVersion(page: pg_sys::Page) -> ::core::ffi::c_char {
+    // #define PageGetPageLayoutVersion(page) \
+    // (((PageHeader) (page))->pd_pagesize_version & 0x00FF)
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    ((*page_header).pd_pagesize_version & 0x00FF) as ::core::ffi::c_char
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageSetPageSizeAndVersion(page: pg_sys::Page, size: u16, version: u8) {
+    // #define PageSetPageSizeAndVersion(page, size, version) \
+    // ((PageHeader) (page))->pd_pagesize_version = (size) | (version)
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    (*page_header).pd_pagesize_version = size | (version as u16);
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetSpecialSize(page: pg_sys::Page) -> u16 {
+    // #define PageGetSpecialSize(page) \
+    // ((uint16) (PageGetPageSize(page) - ((PageHeader)(page))->pd_special))
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    PageGetPageSize(page) as u16 - (*page_header).pd_special
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetSpecialPointer(page: pg_sys::Page) -> *mut ::core::ffi::c_char {
+    // #define PageGetSpecialPointer(page) \
+    // ((char *) ((char *) (page) + ((PageHeader) (page))->pd_special))
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    page.add((*page_header).pd_special as usize) as *mut ::core::ffi::c_char
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetItem(page: pg_sys::Page, item_id: pg_sys::ItemId) -> *mut ::core::ffi::c_char {
+    // #define PageGetItem(page, itemId) \
+    // (((char *)(page)) + ItemIdGetOffset(itemId))
+    page.add(ItemIdGetOffset(item_id) as usize)
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn PageGetMaxOffsetNumber(page: pg_sys::Page) -> pg_sys::OffsetNumber {
+    // #define PageGetMaxOffsetNumber(page) \
+    // (((PageHeader) (page))->pd_lower <= SizeOfPageHeaderData ? 0 : \
+    // ((((PageHeader) (page))->pd_lower - SizeOfPageHeaderData) / sizeof(ItemIdData)))
+    const SizeOfPageHeaderData: pg_sys::Size =
+        core::mem::offset_of!(pg_sys::PageHeaderData, pd_linp);
+    let page_header = page as *mut pg_sys::PageHeaderData;
+    if (*page_header).pd_lower <= SizeOfPageHeaderData as u16 {
+        0
+    } else {
+        ((*page_header).pd_lower - SizeOfPageHeaderData as u16)
+            / std::mem::size_of::<pg_sys::ItemIdData>() as u16
+    }
+}
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn BufferIsValid(buffer: pg_sys::Buffer) -> bool {
+    // static inline bool
+    // BufferIsValid(Buffer bufnum)
+    // {
+    //     Assert(bufnum <= NBuffers);
+    //     Assert(bufnum >= -NLocBuffer);
+
+    //     return bufnum != InvalidBuffer;
+    // }
+    assert!(buffer <= pg_sys::NBuffers);
+    assert!(buffer >= -pg_sys::NLocBuffer);
+    buffer != pg_sys::InvalidBuffer
+}
