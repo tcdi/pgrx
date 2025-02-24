@@ -560,5 +560,5 @@ pub unsafe fn BufferIsValid(buffer: pg_sys::Buffer) -> bool {
     // }
     assert!(buffer <= pg_sys::NBuffers);
     assert!(buffer >= -pg_sys::NLocBuffer);
-    buffer != pg_sys::InvalidBuffer
+    buffer != pg_sys::InvalidBuffer as pg_sys::Buffer
 }

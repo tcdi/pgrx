@@ -48,7 +48,7 @@ pub enum PgLogLevel {
     WARNING = crate::WARNING as isize,
 
     /// user error - abort transaction; return to known state
-    ERROR = crate::ERROR as isize,
+    ERROR = crate::PGERROR as isize,
 
     /// fatal error - abort process
     FATAL = crate::FATAL as isize,
