@@ -58,7 +58,6 @@ error[E0277]: the trait bound `Vec<Option<&[u8]>>: ArgAbi<'_>` is not satisfied
 54 | |         test_rt_array_bytea,
 55 | |         Vec<Option<&[u8]>>,
 ...  |
-63 | |         ]
 64 | |     );
    | |_____- in this macro invocation
    |
@@ -88,7 +87,6 @@ error[E0277]: the trait bound `Vec<Option<&[u8]>>: FromDatum` is not satisfied
 54 | |         test_rt_array_bytea,
 55 | |         Vec<Option<&[u8]>>,
 ...  |
-63 | |         ]
 64 | |     );
    | |_____- in this macro invocation
    |
@@ -103,7 +101,7 @@ note: required by a bound in `pgrx::Spi::get_one_with_args`
    |                                       ^^^^^^^^^ required by this bound in `Spi::get_one_with_args`
    = note: this error originates in the macro `roundtrip_test` which comes from the expansion of the macro `roundtrip` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `Vec<Option<&str>>: FromDatum` is not satisfied
+error[E0284]: type annotations needed: cannot satisfy `for<'arr> <Option<&str> as UnboxDatum>::As<'arr> == Option<&str>`
   --> tests/todo/roundtrip-tests.rs:36:38
    |
 36 |                   let result: $rtype = Spi::get_one_with_args(
@@ -111,7 +109,7 @@ error[E0277]: the trait bound `Vec<Option<&str>>: FromDatum` is not satisfied
 37 | |                     &format!("SELECT {}($1)", stringify!(tests.$fname)),
 38 | |                     &[value.into()],
 39 | |                 )?
-   | |_________________^ the trait `FromDatum` is not implemented for `Vec<Option<&str>>`
+   | |_________________^ cannot satisfy `for<'arr> <Option<&str> as UnboxDatum>::As<'arr> == Option<&str>`
 ...
 66 | /     roundtrip!(
 67 | |         rt_array_refstr,
@@ -121,10 +119,7 @@ error[E0277]: the trait bound `Vec<Option<&str>>: FromDatum` is not satisfied
 71 | |     );
    | |_____- in this macro invocation
    |
-   = help: the following other types implement trait `FromDatum`:
-             Vec<Option<T>>
-             Vec<T>
-             Vec<u8>
+   = note: required for `Vec<Option<&str>>` to implement `FromDatum`
 note: required by a bound in `pgrx::Spi::get_one_with_args`
   --> $WORKSPACE/pgrx/src/spi.rs
    |
@@ -143,7 +138,6 @@ error[E0277]: the trait bound `Vec<Option<&CStr>>: ArgAbi<'_>` is not satisfied
 75 | |         test_rt_array_cstr,
 76 | |         Vec<Option<&'static CStr>>,
 ...  |
-84 | |         ]
 85 | |     );
    | |_____- in this macro invocation
    |
@@ -173,7 +167,6 @@ error[E0277]: the trait bound `Vec<Option<&CStr>>: FromDatum` is not satisfied
 75 | |         test_rt_array_cstr,
 76 | |         Vec<Option<&'static CStr>>,
 ...  |
-84 | |         ]
 85 | |     );
    | |_____- in this macro invocation
    |
