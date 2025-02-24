@@ -1,6 +1,6 @@
 use super::Complex;
 use pgrx::datum::Date;
-use rand::distributions::{Alphanumeric, Standard};
+use rand::distr::{Alphanumeric, StandardUniform};
 use rand::Rng;
 
 #[derive(pgrx::PostgresType, Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
@@ -14,19 +14,19 @@ impl RandomData {
     fn random() -> Self {
         RandomData {
             i: rand::random(),
-            s: rand::thread_rng()
+            s: rand::rng()
                 .sample_iter(Alphanumeric)
-                .take(rand::thread_rng().gen_range(0..=1000))
+                .take(rand::rng().random_range(0..=1000))
                 .map(char::from)
                 .collect(),
-            a: rand::thread_rng()
-                .sample_iter(Standard)
-                .take(rand::thread_rng().gen_range(0..=1000))
+            a: rand::rng()
+                .sample_iter(StandardUniform)
+                .take(rand::rng().random_range(0..=1000))
                 .map(|_: u32| {
                     Date::new(
-                        rand::thread_rng().gen_range(1..=3000),
-                        rand::thread_rng().gen_range(1..=12),
-                        rand::thread_rng().gen_range(1..=28),
+                        rand::rng().random_range(1..=3000),
+                        rand::rng().random_range(1..=12),
+                        rand::rng().random_range(1..=28),
                     )
                     .unwrap()
                 })
