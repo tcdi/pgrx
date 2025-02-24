@@ -41,7 +41,7 @@ mod rss {
                 .call()
                 .wrap_err_with(|| format!("unable to retrieve {VERSIONS_RSS_URL}"))?;
 
-            let rss: Rss = match serde_xml_rs::from_str(&response.into_string()?) {
+            let rss: Rss = match serde_xml_rs::from_str(&response.into_body().read_to_string()?) {
                 Ok(rss) => rss,
                 Err(e) => return Err(e.into()),
             };

@@ -8,7 +8,7 @@
 //LICENSE
 //LICENSE Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 use env_proxy::for_url_str;
-use ureq::{Agent, AgentBuilder, Proxy};
+use ureq::{Agent, Proxy};
 
 pub(crate) mod connect;
 pub(crate) mod cross;
@@ -33,9 +33,10 @@ pub(crate) mod version;
 // set the HTTPS_PROXY/HTTP_PROXY environment variables.
 fn build_agent_for_url(url: &str) -> eyre::Result<Agent> {
     if let Some(proxy_url) = for_url_str(url).to_string() {
-        Ok(AgentBuilder::new().proxy(Proxy::new(proxy_url)?).build())
+        let config = Agent::config_builder().proxy(Some(Proxy::new(&proxy_url)?)).build();
+        Ok(Agent::new_with_config(config))
     } else {
-        Ok(Agent::new())
+        Ok(Agent::new_with_defaults())
     }
 }
 

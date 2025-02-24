@@ -256,13 +256,12 @@ fn download_postgres(
     tracing::trace!(status_code = %status, url = %url, "Fetched");
     if status != 200 {
         return Err(eyre!(
-            "Problem downloading {}:\ncode={status}\n{}",
+            "Problem downloading {}:\ncode={status}\n{:?}",
             pg_config.url().unwrap().to_string().yellow().bold(),
-            http_response.into_string()?
+            http_response.into_body().read_to_string()
         ));
     }
-    let mut buf = Vec::new();
-    let _count = http_response.into_reader().read_to_end(&mut buf)?;
+    let buf = http_response.into_body().read_to_vec()?;
     let pgdir = untar(&buf, pgrx_home, pg_config, init)?;
     configure_postgres(pg_config, &pgdir, init)?;
     make_postgres(pg_config, &pgdir, init)?;
