@@ -209,6 +209,8 @@ impl Upgrade {
         }
         Ok(())
     }
+
+    #[allow(deprecated)] // the API changes to toml_edit are quite complex!
     fn process_manifest(&self, path: &PathBuf, manifest: &mut LocalManifest) -> eyre::Result<()> {
         const RELEVANT_PACKAGES: [&str; 6] = [
             "pgrx",

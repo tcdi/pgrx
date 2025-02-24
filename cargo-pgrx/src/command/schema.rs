@@ -13,13 +13,13 @@ use crate::profile::CargoProfile;
 use crate::CommandExecute;
 use cargo_toml::Manifest;
 use eyre::WrapErr;
+use object::read::macho::MachOFatFile32;
 use owo_colors::OwoColorize;
 use pgrx_pg_config::cargo::PgrxManifestExt;
 use pgrx_pg_config::{get_target_dir, PgConfig, Pgrx};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
-use object::read::macho::MachOFatFile32;
 
 /// Generate extension schema files
 #[derive(clap::Args, Debug)]
