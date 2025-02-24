@@ -19,6 +19,7 @@ use pgrx_pg_config::{get_target_dir, PgConfig, Pgrx};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
+use object::read::macho::MachOFatFile32;
 
 /// Generate extension schema files
 #[derive(clap::Args, Debug)]
@@ -593,7 +594,6 @@ fn parse_object(data: &[u8]) -> object::Result<object::File> {
 }
 
 fn slice_arch32<'a>(data: &'a [u8], arch: &str) -> Option<&'a [u8]> {
-    use object::macho::FatHeader;
     use object::read::macho::FatArch;
     use object::Architecture;
     let target = match arch {
@@ -607,8 +607,8 @@ fn slice_arch32<'a>(data: &'a [u8], arch: &str) -> Option<&'a [u8]> {
         _ => Architecture::Unknown,
     };
 
-    let candidates = FatHeader::parse_arch32(data).ok()?;
-    let architecture = candidates.iter().find(|a| a.architecture() == target)?;
+    let candidates = MachOFatFile32::parse(data).ok()?;
+    let architecture = candidates.arches().iter().find(|a| a.architecture() == target)?;
 
     architecture.data(data).ok()
 }
