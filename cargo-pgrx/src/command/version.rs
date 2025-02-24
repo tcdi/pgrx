@@ -25,6 +25,7 @@ mod rss {
     use pgrx_pg_config::{PgMinorVersion, PgVersion};
     use serde::Deserialize;
     use std::collections::BTreeMap;
+    use std::io::Read;
     use url::Url;
 
     use crate::command::build_agent_for_url;
@@ -36,12 +37,15 @@ mod rss {
             static VERSIONS_RSS_URL: &str = "https://www.postgresql.org/versions.rss";
 
             let http_client = build_agent_for_url(VERSIONS_RSS_URL)?;
-            let response = http_client
+            let mut response = http_client
                 .get(VERSIONS_RSS_URL)
                 .call()
                 .wrap_err_with(|| format!("unable to retrieve {VERSIONS_RSS_URL}"))?;
 
-            let rss: Rss = match serde_xml_rs::from_str(&response.into_body().read_to_string()?) {
+            let mut buf = Vec::new();
+            let _count = response.body_mut().as_reader().read_to_end(&mut buf)?;
+            let body = String::from_utf8(buf)?;
+            let rss: Rss = match serde_xml_rs::from_str(&body) {
                 Ok(rss) => rss,
                 Err(e) => return Err(e.into()),
             };

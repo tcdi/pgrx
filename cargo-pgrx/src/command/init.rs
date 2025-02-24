@@ -20,7 +20,7 @@ use tar::Archive;
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -251,17 +251,20 @@ fn download_postgres(
     let url = pg_config.url().expect("no url for pg_config").as_str();
     tracing::debug!(url = %url, "Fetching");
     let http_client = build_agent_for_url(url)?;
-    let http_response = http_client.get(url).call()?;
+    let mut http_response = http_client.get(url).call()?;
+    let mut buf = Vec::new();
+    let _count = http_response.body_mut().as_reader().read_to_end(&mut buf)?;
+
     let status = http_response.status();
     tracing::trace!(status_code = %status, url = %url, "Fetched");
     if status != 200 {
         return Err(eyre!(
-            "Problem downloading {}:\ncode={status}\n{:?}",
+            "Problem downloading {}:\ncode={status}\n{}",
             pg_config.url().unwrap().to_string().yellow().bold(),
-            http_response.into_body().read_to_string()
+            String::from_utf8_lossy(&buf),
         ));
     }
-    let buf = http_response.into_body().read_to_vec()?;
+
     let pgdir = untar(&buf, pgrx_home, pg_config, init)?;
     configure_postgres(pg_config, &pgdir, init)?;
     make_postgres(pg_config, &pgdir, init)?;

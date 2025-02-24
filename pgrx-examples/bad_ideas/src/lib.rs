@@ -10,7 +10,7 @@
 use pgrx::prelude::*;
 use pgrx::{check_for_interrupts, info, register_xact_callback, PgRelation, PgXactCallbackEvent};
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::panic::catch_unwind;
 use std::process::Command;
 
@@ -84,9 +84,11 @@ fn write_file(filename: &str, bytes: &[u8]) -> i64 {
 
 #[pg_extern]
 fn http(url: &str) -> String {
-    let response = ureq::Agent::new_with_defaults().get(url).call().expect("invalid http response");
-
-    response.into_body().read_to_string().expect("response should have a body")
+    let mut response =
+        ureq::Agent::new_with_defaults().get(url).call().expect("invalid http response");
+    let mut buf = Vec::new();
+    let _count = response.body_mut().as_reader().read_to_end(&mut buf)?;
+    String::from_utf8_lossy(&buf).into_owned()
 }
 
 #[pg_extern]
