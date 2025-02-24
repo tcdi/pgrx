@@ -7,7 +7,7 @@
 //LICENSE All rights reserved.
 //LICENSE
 //LICENSE Use of this source code is governed by the MIT license that can be found in the LICENSE file.
-use cargo_edit::{registry_url, update_registry_index, Dependency, LocalManifest};
+use cargo_edit::{registry_url, CertsSource, Dependency, IndexCache, LocalManifest};
 use eyre::eyre;
 use std::path::{Path, PathBuf};
 use toml_edit::KeyMut;
@@ -110,6 +110,7 @@ impl Upgrade {
         mut key: KeyMut,
         dep: &mut toml_edit::Item,
     ) -> eyre::Result<()> {
+        let mut index = IndexCache::new(CertsSource::Native);
         let dep_name_string = key.get().to_string();
         let dep_name = dep_name_string.as_str();
         let parsed_dep: Dependency = match Dependency::from_toml(path.as_path(), dep_name, dep) {
@@ -123,25 +124,26 @@ impl Upgrade {
         };
         let reg_url = registry_url(path, parsed_dep.registry())
             .map_err(|e| eyre!("Unable to fetch registry URL for path: {e}"))?;
-        update_registry_index(&reg_url, false)
-            .map_err(|e| eyre!("Unable to update registry index: {e}"))?;
+        let index =
+            index.index(&reg_url).map_err(|e| eyre!("Unable to get registry index: {e}"))?;
         let target_version = match self.to {
             Some(ref ver) => Some(ver.clone()),
-            None => cargo_edit::get_latest_dependency(
-                dep_name,
-                self.include_prereleases,
-                None,
-                path,
-                Some(&reg_url),
-            )
-            .map_err(|e| {
-                eyre!(
-                    "Unable to fetch the latest version \
-                        for crate {dep_name} due to {e}"
+            None => {
+                let dependency = cargo_edit::get_latest_dependency(
+                    dep_name,
+                    self.include_prereleases,
+                    None,
+                    index,
                 )
-            })?
-            .version()
-            .map(|s| s.to_string()),
+                .map_err(|e| {
+                    eyre!(
+                        "Unable to fetch the latest version \
+                        for crate {dep_name} due to {e}"
+                    )
+                })?;
+
+                dependency.version().map(|s| s.to_string())
+            }
         };
         let target_version = match target_version {
             Some(ver) => ver,
