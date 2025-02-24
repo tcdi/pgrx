@@ -392,12 +392,13 @@ pub unsafe fn MemoryContextSwitchTo(context: crate::MemoryContext) -> crate::Mem
 #[allow(non_snake_case)]
 #[inline(always)]
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
-pub unsafe fn BufferGetPageSize(_buffer: pg_sys::Buffer) -> pg_sys::Size {
+pub unsafe fn BufferGetPageSize(buffer: pg_sys::Buffer) -> pg_sys::Size {
     // #define BufferGetPageSize(buffer) \
     // ( \
     //     AssertMacro(BufferIsValid(buffer)), \
     //     (Size)BLCKSZ \
     // )
+    assert!(BufferIsValid(buffer));
     pg_sys::BLCKSZ as pg_sys::Size
 }
 
@@ -548,7 +549,7 @@ pub unsafe fn PageGetMaxOffsetNumber(page: pg_sys::Page) -> pg_sys::OffsetNumber
 #[allow(non_snake_case)]
 #[inline(always)]
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
-pub unsafe fn BufferIsValid(bufnum: pg_sys::Buffer) -> bool {
+pub unsafe fn BufferIsValid(buffer: pg_sys::Buffer) -> bool {
     // static inline bool
     // BufferIsValid(Buffer bufnum)
     // {
@@ -557,7 +558,7 @@ pub unsafe fn BufferIsValid(bufnum: pg_sys::Buffer) -> bool {
 
     //     return bufnum != InvalidBuffer;
     // }
-    assert!(bufnum <= pg_sys::NBuffers);
-    assert!(bufnum >= -pg_sys::NLocBuffer);
-    bufnum != pg_sys::InvalidBuffer
+    assert!(buffer <= pg_sys::NBuffers);
+    assert!(buffer >= -pg_sys::NLocBuffer);
+    buffer != pg_sys::InvalidBuffer
 }
