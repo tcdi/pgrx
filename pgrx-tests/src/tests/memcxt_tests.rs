@@ -109,7 +109,7 @@ mod tests {
         let ctx_sys = ctx.value();
         PgTryBuilder::new(move || unsafe {
             ctx.switch_to(|_| {
-                assert_eq!(pg_sys::CurrentMemoryContext, ctx_sys);
+                assert!(std::ptr::eq(pg_sys::CurrentMemoryContext, ctx_sys));
                 panic!();
             });
         })
