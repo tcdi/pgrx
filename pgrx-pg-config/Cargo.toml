@@ -32,5 +32,5 @@ thiserror.workspace = true
 toml.workspace = true
 url.workspace = true
 
-home = "0.5.9"
+home = "0.5.11"
 pathsearch = "0.2.0"

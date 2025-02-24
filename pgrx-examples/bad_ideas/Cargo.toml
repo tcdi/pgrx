@@ -33,8 +33,8 @@ pg_test = []
 
 [dependencies]
 pgrx = { path = "../../pgrx", default-features = false }
-rand = "0.8.5"
-ureq = "2.8.0"
+rand = "0.9.0"
+ureq = "3.0.6"
 
 [dev-dependencies]
 pgrx-tests = { path = "../../pgrx-tests" }

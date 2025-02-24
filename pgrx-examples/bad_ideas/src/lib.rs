@@ -84,9 +84,9 @@ fn write_file(filename: &str, bytes: &[u8]) -> i64 {
 
 #[pg_extern]
 fn http(url: &str) -> String {
-    let response = ureq::Agent::new().get(url).call().expect("invalid http response");
+    let response = ureq::Agent::new_with_defaults().get(url).call().expect("invalid http response");
 
-    response.into_string().expect("invalid string from response")
+    response.into_body().read_to_string().expect("response should have a body")
 }
 
 #[pg_extern]

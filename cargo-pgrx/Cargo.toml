@@ -7,7 +7,7 @@
 #LICENSE All rights reserved.
 #LICENSE
 #LICENSE Use of this source code is governed by the MIT license that can be found in the LICENSE file.
- 
+
 [package]
 name = "cargo-pgrx"
 version = "0.12.7"
@@ -20,7 +20,7 @@ documentation = "https://docs.rs/cargo-pgrx"
 categories = ["development-tools::cargo-plugins", "command-line-utilities", "database"]
 keywords = ["database", "postgres", "postgresql", "extension"]
 readme = "README.md"
-exclude = [ "*.png" ]
+exclude = ["*.png"]
 edition = "2021"
 
 [dependencies]
@@ -36,33 +36,33 @@ regex.workspace = true
 toml.workspace = true
 toml_edit.workspace = true
 
-clap = { version = "4.4.2", features = [ "env", "suggestions", "cargo", "derive", "wrap_help" ] }
-jobslot = "0.2.12" # as seen in gmake -j{N}
-semver = "1.0.20" # checking pgrx versions match
-tempfile = "3.8.0"
+clap = { version = "4.4.2", features = ["env", "suggestions", "cargo", "derive", "wrap_help"] }
+jobslot = "0.2.20" # as seen in gmake -j{N}
+semver = "1.0.25" # checking pgrx versions match
+tempfile = "3.17.1"
 
 # emit better diagnostics
-color-eyre = "0.6.2"
+color-eyre = "0.6.3"
 eyre.workspace = true
 owo-colors.workspace = true
 tracing = "0.1"
-tracing-error = "0.2.0"
-tracing-subscriber = { version = "0.3.17", features = [ "env-filter" ] }
+tracing-error = "0.2.1"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 # for downloading/unpacking things from the Postgres file servers
-bzip2 = "0.4.4"
+bzip2 = "0.5.1"
 env_proxy = "0.4.1"
 serde.workspace = true
 serde-xml-rs = "0.6.0"
-tar = "0.4.40"
-ureq = { version = "2.8.0", default-features = false, features = [ "gzip" ] }
+tar = "0.4.44"
+ureq = { version = "3.0.6", default-features = false, features = ["gzip"] }
 url.workspace = true
 
 # SQL schema generation
 proc-macro2.workspace = true
 quote.workspace = true
 [dependencies.object]
-version = "0.32.2"
+version = "0.36.7"
 default-features = false
 features = [
     "read_core", "std", # we use object read-only and like having actual errors
@@ -74,8 +74,8 @@ features = [
 default = ["rustls"]
 native-tls = ["ureq/native-tls"]
 rustls = [
-    "ureq/tls",
-    "ureq/native-certs" # induces rustls to use the OS-level root of trust
+    "ureq/rustls",
+    "ureq/native-tls" # induces rustls to use the OS-level root of trust
 ]
 
 [lints.clippy]

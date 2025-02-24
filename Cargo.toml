@@ -62,23 +62,23 @@ pgrx-pg-config = { path = "./pgrx-pg-config", version = "=0.12.7" }
 pgrx-bindgen = { path = "./pgrx-bindgen", version = "=0.12.7" }
 
 cargo_metadata = "0.18.0"
-cargo-edit = "0.12.2" # format-preserving edits to cargo.toml
-cargo_toml = "0.19" # used for building projects
+cargo-edit = "0.13.1" # format-preserving edits to cargo.toml
+cargo_toml = "0.21" # used for building projects
 clap-cargo = { version = "0.14.0", features = [ "cargo_metadata" ] }
 eyre = "~0.6.12" # simplifies error-handling
 libc = "0.2" # FFI compat
-owo-colors =  { version = "4.0", features = [ "supports-colors" ] } # for output highlighting
-proc-macro2 = { version = "1.0.78", features = [ "span-locations" ] }
-quote = "1.0.33"
-regex = "1.1" # used for build/test
+owo-colors =  { version = "4.2", features = [ "supports-colors" ] } # for output highlighting
+proc-macro2 = { version = "1.0.93", features = [ "span-locations" ] }
+quote = "1.0.38"
+regex = "1.11" # used for build/test
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
 syn = { version = "2", features = [ "extra-traits", "full", "parsing" ] }
 toml = "0.8" # our config files
-toml_edit = "0.19.14" # format-preserving edits to toml files, used with cargo-edit
-thiserror = "1"
+toml_edit = "0.22.24" # format-preserving edits to toml files, used with cargo-edit
+thiserror = "2"
 unescape = "0.1.0" # for escaped-character-handling
-url = "2.4.1" # the non-existent std::web
+url = "2.5.4" # the non-existent std::web
 walkdir = "2" # directory recursion
 
 [profile.dev]
