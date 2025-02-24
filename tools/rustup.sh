@@ -1,7 +1,7 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 echo "---- setup rustc ----"
-if [ $(type rustup) ]; then
+if [[ $(type rustup) ]]; then
   echo "rustup already installed"
 else
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup-init.sh
