@@ -544,3 +544,20 @@ pub unsafe fn PageGetMaxOffsetNumber(page: pg_sys::Page) -> pg_sys::OffsetNumber
             / std::mem::size_of::<pg_sys::ItemIdData>() as u16
     }
 }
+
+#[allow(non_snake_case)]
+#[inline(always)]
+#[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
+pub unsafe fn BufferIsValid(bufnum: pg_sys::Buffer) -> bool {
+    // static inline bool
+    // BufferIsValid(Buffer bufnum)
+    // {
+    //     Assert(bufnum <= NBuffers);
+    //     Assert(bufnum >= -NLocBuffer);
+
+    //     return bufnum != InvalidBuffer;
+    // }
+    assert!(bufnum <= pg_sys::NBuffers);
+    assert!(bufnum >= -pg_sys::NLocBuffer);
+    bufnum != pg_sys::InvalidBuffer
+}
