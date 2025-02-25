@@ -610,6 +610,8 @@ jobs:
           New-Item -ItemType Directory -Force -Path $env:SCCACHE_DIR | Out-Null
           sccache --version
 
+          rustup update
+
           Write-Output "----- Outputting env -----"
           Get-ChildItem Env:
           Write-Output ""
