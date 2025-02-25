@@ -1029,9 +1029,13 @@ fn build_shim(
 fn extra_bindgen_clang_args(pg_config: &PgConfig) -> eyre::Result<Vec<String>> {
     let mut out = vec![];
     let flags = shlex::split(&pg_config.cppflags()?.to_string_lossy()).unwrap_or_default();
-    // Just give clang the full flag set, since presumably that's what we're
-    // getting when we build the C shim anyway.
-    out.extend(flags.iter().cloned());
+    if env_tracked("CARGO_CFG_TARGET_OS").as_deref() != Some("windows") {
+        // Just give clang the full flag set, since presumably that's what we're
+        // getting when we build the C shim anyway.
+        // Skip it on Windows, since clang is used to generate cshim but MSVC is
+        // used to compile PostgreSQL.
+        out.extend(flags.iter().cloned());
+    }
     if env_tracked("CARGO_CFG_TARGET_OS").as_deref() == Some("macos") {
         // Find the `-isysroot` flags so we can warn about them, so something
         // reasonable shows up if/when the build fails.
