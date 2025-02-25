@@ -136,6 +136,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "replication/logical.h"
+#include "replication/logicalworker.h"
 #include "replication/output_plugin.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rowsecurity.h"
