@@ -829,6 +829,7 @@ fn run_bindgen(
         .wrap_static_fns(enable_cshim)
         .wrap_static_fns_path(out_path.join("pgrx-cshim-static"))
         .wrap_static_fns_suffix("__pgrx_cshim")
+        .override_abi(bindgen::Abi::CUnwind, ".*")
         .generate()
         .wrap_err_with(|| format!("Unable to generate bindings for pg{major_version}"))?;
     let mut binding_str = bindings.to_string();
@@ -866,7 +867,7 @@ fn add_blocklists(bind: bindgen::Builder) -> bindgen::Builder {
         .blocklist_var("CONFIGURE_ARGS") // configuration during build is hopefully irrelevant
         .blocklist_var("_*(?:HAVE|have)_.*") // header tracking metadata
         .blocklist_var("_[A-Z_]+_H") // more header metadata
-        // It's used by explict `extern "C"`
+        // It's used by explict `extern "C-unwind"`
         .blocklist_function("pg_re_throw")
         .blocklist_function("err(start|code|msg|detail|context_msg|hint|finish)")
         // These functions are already ported in Rust

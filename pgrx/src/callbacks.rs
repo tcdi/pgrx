@@ -164,7 +164,7 @@ where
 
     // internal function that we register as an XactCallback
     #[pg_guard]
-    unsafe extern "C" fn callback(
+    unsafe extern "C-unwind" fn callback(
         event: pg_sys::XactEvent::Type,
         _arg: *mut ::std::os::raw::c_void,
     ) {
@@ -318,7 +318,7 @@ where
     static mut SUB_HOOKS: Option<SubCallbackMap> = None;
 
     #[pg_guard]
-    unsafe extern "C" fn callback(
+    unsafe extern "C-unwind" fn callback(
         event: pg_sys::SubXactEvent::Type,
         my_subid: pg_sys::SubTransactionId,
         parent_subid: pg_sys::SubTransactionId,

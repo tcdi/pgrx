@@ -37,7 +37,7 @@ static PRIMITIVE: PgLwLock<i32> = PgLwLock::new(c"shmem_primtive");
 static ATOMIC: PgAtomic<std::sync::atomic::AtomicBool> = PgAtomic::new(c"shmem_atomic");
 
 #[pg_guard]
-pub extern "C" fn _PG_init() {
+pub extern "C-unwind" fn _PG_init() {
     pg_shmem_init!(DEQUE);
     pg_shmem_init!(VEC);
     pg_shmem_init!(HASH);

@@ -106,7 +106,7 @@ pub unsafe fn GetMemoryChunkContext(pointer: *mut std::os::raw::c_void) -> pg_sy
     #[cfg(any(feature = "pg16", feature = "pg17"))]
     {
         #[pgrx_macros::pg_guard]
-        extern "C" {
+        extern "C-unwind" {
             #[link_name = "GetMemoryChunkContext"]
             pub fn extern_fn(pointer: *mut std::os::raw::c_void) -> pg_sys::MemoryContext;
         }
@@ -340,11 +340,11 @@ pub unsafe fn heap_tuple_get_struct<T>(htup: super::HeapTuple) -> *mut T {
 // and we route people to the old symbols they were using before on later ones.
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
 #[::pgrx_macros::pg_guard]
-extern "C" {
+extern "C-unwind" {
     pub fn planstate_tree_walker(
         planstate: *mut super::PlanState,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
@@ -352,7 +352,7 @@ extern "C" {
     pub fn query_tree_walker(
         query: *mut super::Query,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -361,7 +361,7 @@ extern "C" {
     pub fn query_or_expression_tree_walker(
         node: *mut super::Node,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -370,7 +370,7 @@ extern "C" {
     pub fn range_table_entry_walker(
         rte: *mut super::RangeTblEntry,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -379,7 +379,7 @@ extern "C" {
     pub fn range_table_walker(
         rtable: *mut super::List,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -388,7 +388,7 @@ extern "C" {
     pub fn expression_tree_walker(
         node: *mut super::Node,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
@@ -396,7 +396,7 @@ extern "C" {
     pub fn raw_expression_tree_walker(
         node: *mut super::Node,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
@@ -406,7 +406,7 @@ extern "C" {
 pub unsafe fn planstate_tree_walker(
     planstate: *mut super::PlanState,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
 ) -> bool {
@@ -417,7 +417,7 @@ pub unsafe fn planstate_tree_walker(
 pub unsafe fn query_tree_walker(
     query: *mut super::Query,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -429,7 +429,7 @@ pub unsafe fn query_tree_walker(
 pub unsafe fn query_or_expression_tree_walker(
     node: *mut super::Node,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -440,7 +440,7 @@ pub unsafe fn query_or_expression_tree_walker(
 #[cfg(any(feature = "pg16", feature = "pg17"))]
 pub unsafe fn expression_tree_walker(
     node: *mut crate::Node,
-    walker: Option<unsafe extern "C" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
+    walker: Option<unsafe extern "C-unwind" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
     context: *mut ::core::ffi::c_void,
 ) -> bool {
     crate::expression_tree_walker_impl(node, walker, context)
@@ -450,7 +450,7 @@ pub unsafe fn expression_tree_walker(
 pub unsafe fn range_table_entry_walker(
     rte: *mut super::RangeTblEntry,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -462,7 +462,7 @@ pub unsafe fn range_table_entry_walker(
 pub unsafe fn range_table_walker(
     rtable: *mut super::List,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -473,7 +473,7 @@ pub unsafe fn range_table_walker(
 #[cfg(any(feature = "pg16", feature = "pg17"))]
 pub unsafe fn raw_expression_tree_walker(
     node: *mut crate::Node,
-    walker: Option<unsafe extern "C" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
+    walker: Option<unsafe extern "C-unwind" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
     context: *mut ::core::ffi::c_void,
 ) -> bool {
     crate::raw_expression_tree_walker_impl(node, walker, context)

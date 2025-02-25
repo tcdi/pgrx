@@ -24,7 +24,7 @@ fn crash() {
 }
 
 #[pg_guard]
-extern "C" fn walker(_node: *mut pg_sys::Node, _void: *mut ::core::ffi::c_void) -> bool {
+extern "C-unwind" fn walker(_node: *mut pg_sys::Node, _void: *mut ::core::ffi::c_void) -> bool {
     panic!("panic in walker");
 }
 

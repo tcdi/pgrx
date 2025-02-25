@@ -44,7 +44,7 @@ pub unsafe trait PGRXSharedMemory {}
 /// static ATOMIC: PgAtomic<std::sync::atomic::AtomicBool> = PgAtomic::new(c"atomic");
 ///
 /// #[pg_guard]
-/// pub extern "C" fn _PG_init() {
+/// pub extern "C-unwind" fn _PG_init() {
 ///     pg_shmem_init!(PRIMITIVE);
 ///     pg_shmem_init!(ATOMIC);
 /// }
@@ -56,12 +56,12 @@ macro_rules! pg_shmem_init {
         $thing.pg_init();
 
         unsafe {
-            static mut PREV_SHMEM_STARTUP_HOOK: Option<unsafe extern "C" fn()> = None;
+            static mut PREV_SHMEM_STARTUP_HOOK: Option<unsafe extern "C-unwind" fn()> = None;
             PREV_SHMEM_STARTUP_HOOK = pg_sys::shmem_startup_hook;
             pg_sys::shmem_startup_hook = Some(__pgrx_private_shmem_hook);
 
             #[pg_guard]
-            extern "C" fn __pgrx_private_shmem_hook() {
+            extern "C-unwind" fn __pgrx_private_shmem_hook() {
                 unsafe {
                     if let Some(i) = PREV_SHMEM_STARTUP_HOOK {
                         i();
@@ -78,12 +78,12 @@ macro_rules! pg_shmem_init {
 macro_rules! pg_shmem_init {
     ($thing:expr) => {
         unsafe {
-            static mut PREV_SHMEM_REQUEST_HOOK: Option<unsafe extern "C" fn()> = None;
+            static mut PREV_SHMEM_REQUEST_HOOK: Option<unsafe extern "C-unwind" fn()> = None;
             PREV_SHMEM_REQUEST_HOOK = pg_sys::shmem_request_hook;
             pg_sys::shmem_request_hook = Some(__pgrx_private_shmem_request_hook);
 
             #[pg_guard]
-            extern "C" fn __pgrx_private_shmem_request_hook() {
+            extern "C-unwind" fn __pgrx_private_shmem_request_hook() {
                 unsafe {
                     if let Some(i) = PREV_SHMEM_REQUEST_HOOK {
                         i();
@@ -94,12 +94,12 @@ macro_rules! pg_shmem_init {
         }
 
         unsafe {
-            static mut PREV_SHMEM_STARTUP_HOOK: Option<unsafe extern "C" fn()> = None;
+            static mut PREV_SHMEM_STARTUP_HOOK: Option<unsafe extern "C-unwind" fn()> = None;
             PREV_SHMEM_STARTUP_HOOK = pg_sys::shmem_startup_hook;
             pg_sys::shmem_startup_hook = Some(__pgrx_private_shmem_hook);
 
             #[pg_guard]
-            extern "C" fn __pgrx_private_shmem_hook() {
+            extern "C-unwind" fn __pgrx_private_shmem_hook() {
                 unsafe {
                     if let Some(i) = PREV_SHMEM_STARTUP_HOOK {
                         i();

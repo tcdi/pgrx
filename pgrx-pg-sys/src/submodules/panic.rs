@@ -364,8 +364,8 @@ enum GuardAction<R> {
 /// behind the `#[pg_guard]` and `#[pg_extern]` macros.  Which means the function you'd like to guard
 /// is likely already guarded.
 ///
-/// Where it does need to be used is as a wrapper around Rust `extern "C"` function pointers given
-/// to Postgres, and the `#[pg_guard]` macro takes care of this for you.
+/// Where it does need to be used is as a wrapper around Rust `extern "C-unwind"` function pointers
+/// given to Postgres, and the `#[pg_guard]` macro takes care of this for you.
 ///
 /// In other words, this isn't the function you're looking for.
 ///
@@ -381,8 +381,7 @@ enum GuardAction<R> {
 /// objects have already been dropped.
 ///
 /// In practice, this should only ever be called at the top level of an
-/// `extern "C" fn` (ideally `extern "C-unwind"`) implemented in
-/// Rust.
+/// `extern "C-unwind" fn` implemented in Rust.
 ///
 /// [trivially-deallocated stack frames](https://github.com/rust-lang/rfcs/blob/master/text/2945-c-unwind-abi.md#plain-old-frames)
 #[doc(hidden)]
@@ -396,7 +395,7 @@ where
         GuardAction::Return(r) => r,
         GuardAction::ReThrow => {
             #[cfg_attr(target_os = "windows", link(name = "postgres"))]
-            extern "C" /* "C-unwind" */ {
+            extern "C-unwind" {
                 fn pg_re_throw() -> !;
             }
             unsafe {
@@ -511,7 +510,7 @@ fn do_ereport(ereport: ErrorReportWithLevel) {
     //
 
     #[cfg_attr(target_os = "windows", link(name = "postgres"))]
-    extern "C" {
+    extern "C-unwind" {
         fn errcode(sqlerrcode: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
         fn errmsg(fmt: *const ::std::os::raw::c_char, ...) -> ::std::os::raw::c_int;
         fn errdetail(fmt: *const ::std::os::raw::c_char, ...) -> ::std::os::raw::c_int;
@@ -527,7 +526,7 @@ fn do_ereport(ereport: ErrorReportWithLevel) {
     fn do_ereport_impl(ereport: ErrorReportWithLevel) {
 
         #[cfg_attr(target_os = "windows", link(name = "postgres"))]
-        extern "C" {
+        extern "C-unwind" {
             fn errstart(elevel: ::std::os::raw::c_int, domain: *const ::std::os::raw::c_char) -> bool;
             fn errfinish(filename: *const ::std::os::raw::c_char, lineno: ::std::os::raw::c_int, funcname: *const ::std::os::raw::c_char);
         }
@@ -592,7 +591,7 @@ fn do_ereport(ereport: ErrorReportWithLevel) {
     fn do_ereport_impl(ereport: ErrorReportWithLevel) {
 
         #[cfg_attr(target_os = "windows", link(name = "postgres"))]
-        extern "C" {
+        extern "C-unwind" {
             fn errstart(elevel: ::std::os::raw::c_int, filename: *const ::std::os::raw::c_char, lineno: ::std::os::raw::c_int, funcname: *const ::std::os::raw::c_char, domain: *const ::std::os::raw::c_char) -> bool;
             fn errfinish(dummy: ::std::os::raw::c_int, ...);
         }
