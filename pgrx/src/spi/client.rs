@@ -13,7 +13,7 @@ pub struct SpiClient<'conn> {
 }
 
 impl<'conn> SpiClient<'conn> {
-    /// Connect to Postgres' SPI system
+    /// Connect to Postgres' SPI system.
     pub(super) fn connect() -> SpiResult<Self> {
         // SPI_connect() is documented as being able to return SPI_ERROR_CONNECT, so we have to
         // assume it could.  The truth seems to be that it never actually does.
@@ -21,7 +21,7 @@ impl<'conn> SpiClient<'conn> {
         Ok(SpiClient { __marker: PhantomData })
     }
 
-    /// Prepares a statement that is valid for the lifetime of the client
+    /// Prepares a statement that is valid for the lifetime of the client.
     pub fn prepare<Q: PreparableQuery<'conn>>(
         &self,
         query: Q,
@@ -30,7 +30,7 @@ impl<'conn> SpiClient<'conn> {
         query.prepare(self, args)
     }
 
-    /// Prepares a mutating statement that is valid for the lifetime of the client
+    /// Prepares a mutating statement that is valid for the lifetime of the client.
     pub fn prepare_mut<Q: PreparableQuery<'conn>>(
         &self,
         query: Q,
@@ -39,7 +39,7 @@ impl<'conn> SpiClient<'conn> {
         query.prepare_mut(self, args)
     }
 
-    /// perform a SELECT statement
+    /// Perform a SELECT statement.
     pub fn select<'mcx, Q: Query<'conn>>(
         &self,
         query: Q,
@@ -49,7 +49,7 @@ impl<'conn> SpiClient<'conn> {
         query.execute(self, limit, args)
     }
 
-    /// perform any query (including utility statements) that modify the database in some way
+    /// Perform any query (including utility statements) that modify the database in some way.
     pub fn update<'mcx, Q: Query<'conn>>(
         &mut self,
         query: Q,
@@ -82,7 +82,7 @@ impl<'conn> SpiClient<'conn> {
         })
     }
 
-    /// Set up a cursor that will execute the specified query
+    /// Set up a cursor that will execute the specified query.
     ///
     /// Rows may be then fetched using [`SpiCursor::fetch`].
     ///
@@ -101,7 +101,7 @@ impl<'conn> SpiClient<'conn> {
         self.try_open_cursor(query, args).unwrap()
     }
 
-    /// Set up a cursor that will execute the specified query
+    /// Set up a cursor that will execute the specified query.
     ///
     /// Rows may be then fetched using [`SpiCursor::fetch`].
     ///
@@ -114,7 +114,7 @@ impl<'conn> SpiClient<'conn> {
         query.try_open_cursor(self, args)
     }
 
-    /// Set up a cursor that will execute the specified update (mutating) query
+    /// Set up a cursor that will execute the specified update (mutating) query.
     ///
     /// Rows may be then fetched using [`SpiCursor::fetch`].
     ///
@@ -134,7 +134,7 @@ impl<'conn> SpiClient<'conn> {
         self.try_open_cursor_mut(query, args).unwrap()
     }
 
-    /// Set up a cursor that will execute the specified update (mutating) query
+    /// Set up a cursor that will execute the specified update (mutating) query.
     ///
     /// Rows may be then fetched using [`SpiCursor::fetch`].
     ///
@@ -148,7 +148,7 @@ impl<'conn> SpiClient<'conn> {
         query.try_open_cursor(self, args)
     }
 
-    /// Find a cursor in transaction by name
+    /// Find a cursor in transaction by name.
     ///
     /// A cursor for a query can be opened using [`SpiClient::open_cursor`].
     /// Cursor are automatically closed on drop unless [`SpiCursor::detach_into_name`] is used.
@@ -165,7 +165,7 @@ impl<'conn> SpiClient<'conn> {
 }
 
 impl Drop for SpiClient<'_> {
-    /// When `SpiClient` is dropped, we make sure to disconnect from SPI
+    /// When `SpiClient` is dropped, we make sure to disconnect from SPI.
     fn drop(&mut self) {
         // Best efforts to disconnect from SPI
         // SPI_finish() would only complain if we hadn't previously called SPI_connect() and

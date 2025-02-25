@@ -96,7 +96,7 @@ pub fn quote_identifier<StringLike: AsRef<str>>(ident: StringLike) -> String {
 
 /// A safe wrapper around [`pg_sys::quote_qualified_identifier`]. Returns a properly quoted name of
 /// the following format qualifier.ident. A common usecase is to qualify a table_name for example
-/// `"my schema"."my table"`
+/// `"my schema"."my table"`.
 pub fn quote_qualified_identifier<StringLike: AsRef<str>>(
     qualifier: StringLike,
     ident: StringLike,
@@ -161,7 +161,7 @@ impl TryFrom<libc::c_int> for SpiErrorCodes {
     }
 }
 
-/// Set of possible errors `pgrx` might return while working with Postgres SPI
+/// Set of possible errors `pgrx` might return while working with Postgres SPI.
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum SpiError {
     /// An underlying [`SpiErrorCodes`] given to us by Postgres
@@ -194,7 +194,7 @@ pub type Error = SpiError;
 pub struct Spi;
 
 impl Spi {
-    /// Determines if the current transaction can still be `read_only = true` for purposes of Spi
+    /// Determines if the current transaction can still be `read_only = true` for purposes of SPI
     /// queries.  This is detected in such a way that prior mutable commands within this transaction
     /// (even those not executed via pgrx's Spi) will influence whether or not we can consider the
     /// transaction `read_only = true`.  This is what we want as the user will expect an otherwise
@@ -285,20 +285,20 @@ impl Spi {
         })
     }
 
-    ///  Just run an arbitrary SQL statement.
+    /// Just run an arbitrary SQL statement.
     ///
     /// ## Safety
     ///
-    /// The statement runs in read/write mode
+    /// The statement runs in read/write mode.
     pub fn run(query: &str) -> std::result::Result<(), Error> {
         Spi::run_with_args(query, &[])
     }
 
-    /// run an arbitrary SQL statement with args.
+    /// Run an arbitrary SQL statement with args.
     ///
     /// ## Safety
     ///
-    /// The statement runs in read/write mode
+    /// The statement runs in read/write mode.
     pub fn run_with_args<'mcx>(
         query: &str,
         args: &[DatumWithOid<'mcx>],
@@ -306,12 +306,12 @@ impl Spi {
         Spi::connect_mut(|client| client.update(query, None, args).map(|_| ()))
     }
 
-    /// explain a query, returning its result in json form
+    /// Explain a query, returning its result in JSON form.
     pub fn explain(query: &str) -> Result<Json> {
         Spi::explain_with_args(query, &[])
     }
 
-    /// explain a query with args, returning its result in json form
+    /// Explain a query with args, returning its result in JSON form.
     pub fn explain_with_args<'mcx>(query: &str, args: &[DatumWithOid<'mcx>]) -> Result<Json> {
         Ok(Spi::connect_mut(|client| {
             client
