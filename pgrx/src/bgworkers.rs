@@ -20,7 +20,7 @@ use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-pub static mut PREV_SHMEM_STARTUP_HOOK: Option<unsafe extern "C" fn()> = None;
+pub static mut PREV_SHMEM_STARTUP_HOOK: Option<unsafe extern "C-unwind" fn()> = None;
 static GOT_SIGHUP: AtomicBool = AtomicBool::new(false);
 static GOT_SIGTERM: AtomicBool = AtomicBool::new(false);
 static GOT_SIGINT: AtomicBool = AtomicBool::new(false);
@@ -256,23 +256,23 @@ impl BackgroundWorker {
     }
 }
 
-unsafe extern "C" fn worker_spi_sighup(_signal_args: i32) {
+unsafe extern "C-unwind" fn worker_spi_sighup(_signal_args: i32) {
     GOT_SIGHUP.store(true, Ordering::SeqCst);
     pg_sys::ProcessConfigFile(pg_sys::GucContext::PGC_SIGHUP);
     pg_sys::SetLatch(pg_sys::MyLatch);
 }
 
-unsafe extern "C" fn worker_spi_sigterm(_signal_args: i32) {
+unsafe extern "C-unwind" fn worker_spi_sigterm(_signal_args: i32) {
     GOT_SIGTERM.store(true, Ordering::SeqCst);
     pg_sys::SetLatch(pg_sys::MyLatch);
 }
 
-unsafe extern "C" fn worker_spi_sigint(_signal_args: i32) {
+unsafe extern "C-unwind" fn worker_spi_sigint(_signal_args: i32) {
     GOT_SIGINT.store(true, Ordering::SeqCst);
     pg_sys::SetLatch(pg_sys::MyLatch);
 }
 
-unsafe extern "C" fn worker_spi_sigchld(_signal_args: i32) {
+unsafe extern "C-unwind" fn worker_spi_sigchld(_signal_args: i32) {
     GOT_SIGCHLD.store(true, Ordering::SeqCst);
     pg_sys::SetLatch(pg_sys::MyLatch);
 }
@@ -410,7 +410,7 @@ impl TerminatingDynamicBackgroundWorker {
 /// use pgrx::bgworkers::BackgroundWorkerBuilder;
 ///
 /// #[pg_guard]
-/// pub extern "C" fn _PG_init() {
+/// pub extern "C-unwind" fn _PG_init() {
 ///     BackgroundWorkerBuilder::new("My Example BGWorker")
 ///         .set_function("background_worker_main")
 ///         .set_library("example")
@@ -419,7 +419,7 @@ impl TerminatingDynamicBackgroundWorker {
 /// }
 ///
 /// #[pg_guard]
-/// pub extern "C" fn background_worker_main(_arg: pg_sys::Datum) {
+/// pub extern "C-unwind" fn background_worker_main(_arg: pg_sys::Datum) {
 ///     // do bgworker stuff here
 /// }
 /// ```
@@ -434,7 +434,7 @@ pub struct BackgroundWorkerBuilder {
     bgw_main_arg: pg_sys::Datum,
     bgw_extra: String,
     bgw_notify_pid: pg_sys::pid_t,
-    shared_memory_startup_fn: Option<unsafe extern "C" fn()>,
+    shared_memory_startup_fn: Option<unsafe extern "C-unwind" fn()>,
 }
 
 impl BackgroundWorkerBuilder {
@@ -470,7 +470,7 @@ impl BackgroundWorkerBuilder {
     ///
     /// `startup` allows specifying shared memory initialization startup hook. Ignored
     /// if [`BackgroundWorkerBuilder::load_dynamic`] is used.
-    pub fn enable_shmem_access(mut self, startup: Option<unsafe extern "C" fn()>) -> Self {
+    pub fn enable_shmem_access(mut self, startup: Option<unsafe extern "C-unwind" fn()>) -> Self {
         self.bgw_flags = self.bgw_flags | BGWflags::BGWORKER_SHMEM_ACCESS;
         self.shared_memory_startup_fn = startup;
         self
@@ -514,7 +514,7 @@ impl BackgroundWorkerBuilder {
     /// process is started?
     ///
     /// The specified function **must** be:
-    ///     - `extern "C"`,
+    ///     - `extern "C-unwind"`,
     ///     - guarded with `#[pg_guard]`,
     ///     - take 1 argument of type `pgrx::pg_sys::Datum`, and
     ///     - return "void"
@@ -525,7 +525,7 @@ impl BackgroundWorkerBuilder {
     /// use pgrx::prelude::*;
     ///
     /// #[pg_guard]
-    /// pub extern "C" fn background_worker_main(_arg: pg_sys::Datum) {
+    /// pub extern "C-unwind" fn background_worker_main(_arg: pg_sys::Datum) {
     /// }
     /// ```
     pub fn set_function(mut self, input: &str) -> Self {

@@ -57,6 +57,7 @@ serde-xml-rs = "0.6.0"
 tar = "0.4.44"
 ureq = { version = "3.0.6", default-features = false, features = ["gzip"] }
 url.workspace = true
+zip-extract = "0.2.1"
 
 # SQL schema generation
 proc-macro2.workspace = true

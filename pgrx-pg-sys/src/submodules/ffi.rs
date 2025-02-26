@@ -30,18 +30,18 @@ mod cee_scape {
     where
         F: for<'a> FnOnce(&'a SigJmpBufFields) -> c_int,
     {
-        extern "C" {
+        extern "C-unwind" {
             fn call_closure_with_sigsetjmp(
                 savemask: c_int,
                 closure_env_ptr: *mut c_void,
-                closure_code: extern "C" fn(
+                closure_code: extern "C-unwind" fn(
                     jbuf: *const SigJmpBufFields,
                     env_ptr: *mut c_void,
                 ) -> c_int,
             ) -> c_int;
         }
 
-        extern "C" fn call_from_c_to_rust<F>(
+        extern "C-unwind" fn call_from_c_to_rust<F>(
             jbuf: *const SigJmpBufFields,
             closure_env_ptr: *mut c_void,
         ) -> c_int
@@ -69,7 +69,7 @@ mod cee_scape {
 use cee_scape::{call_with_sigsetjmp, SigJmpBufFields};
 
 /**
-Given a closure that is assumed to be a wrapped Postgres `extern "C"` function, [pg_guard_ffi_boundary]
+Given a closure that is assumed to be a wrapped Postgres `extern "C-unwind"` function, [pg_guard_ffi_boundary]
 works with the Postgres and C runtimes to create a "barrier" that allows Rust to catch Postgres errors
 (`elog(ERROR)`) while running the supplied closure. This is done for the sake of allowing Rust to run
 destructors before Postgres destroys the memory contexts that Rust-in-Postgres code may be enmeshed in.
@@ -82,7 +82,7 @@ Wrapping the FFI into Postgres enables
 But only the first of these is considered paramount.
 
 At all times PGRX reserves the right to choose an implementation that achieves memory safety.
-Currently, this function is used to protect **every** bindgen-generated Postgres `extern "C"` function.
+Currently, this function is used to protect **every** bindgen-generated Postgres `extern "C-unwind"` function.
 
 Generally, the only time *you'll* need to use this function is when calling a Postgres-provided
 function pointer.

@@ -18,7 +18,7 @@ fn extern_func() -> bool {
 #[pg_guard]
 // Uncommenting the line below will make it fail to compile
 // #[no_mangle]
-extern "C" fn extern_func_impl<T>() -> bool {
+extern "C-unwind" fn extern_func_impl<T>() -> bool {
     true
 }
 
@@ -26,7 +26,7 @@ extern "C" fn extern_func_impl<T>() -> bool {
 // and [no_mangle]
 #[pg_guard]
 #[no_mangle]
-extern "C" fn extern_func_impl_1() -> bool {
+extern "C-unwind" fn extern_func_impl_1() -> bool {
     true
 }
 
@@ -35,7 +35,7 @@ extern "C" fn extern_func_impl_1() -> bool {
 #[pg_guard]
 #[no_mangle]
 #[allow(unused_lifetimes)]
-extern "C" fn extern_func_impl_2<'a>() -> bool {
+extern "C-unwind" fn extern_func_impl_2<'a>() -> bool {
     true
 }
 

@@ -191,7 +191,7 @@ impl Serialize for Tuple {
 #[allow(non_snake_case)]
 #[no_mangle]
 #[pg_guard]
-pub unsafe extern "C" fn _PG_output_plugin_init(cb_ptr: *mut pg_sys::OutputPluginCallbacks) {
+pub unsafe extern "C-unwind" fn _PG_output_plugin_init(cb_ptr: *mut pg_sys::OutputPluginCallbacks) {
     let mut callbacks = unsafe { PgBox::from_pg(cb_ptr) };
     callbacks.startup_cb = Some(pg_decode_startup);
     callbacks.begin_cb = Some(pg_decode_begin_txn);
@@ -209,7 +209,7 @@ pub unsafe extern "C" fn _PG_output_plugin_init(cb_ptr: *mut pg_sys::OutputPlugi
 //
 
 #[pg_guard]
-unsafe extern "C" fn pg_decode_startup(
+unsafe extern "C-unwind" fn pg_decode_startup(
     ctx_ptr: *mut pg_sys::LogicalDecodingContext,
     options_ptr: *mut pg_sys::OutputPluginOptions,
     _is_init: bool,
@@ -229,7 +229,7 @@ unsafe extern "C" fn pg_decode_startup(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pg_decode_begin_txn(
+unsafe extern "C-unwind" fn pg_decode_begin_txn(
     ctx_ptr: *mut pg_sys::LogicalDecodingContext,
     _txn_ptr: *mut pg_sys::ReorderBufferTXN,
 ) {
@@ -240,7 +240,7 @@ unsafe extern "C" fn pg_decode_begin_txn(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pg_decode_commit_txn(
+unsafe extern "C-unwind" fn pg_decode_commit_txn(
     ctx_ptr: *mut pg_sys::LogicalDecodingContext,
     txn_ptr: *mut pg_sys::ReorderBufferTXN,
     _commit_lsn: pg_sys::XLogRecPtr,
@@ -252,7 +252,7 @@ unsafe extern "C" fn pg_decode_commit_txn(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pg_decode_change(
+unsafe extern "C-unwind" fn pg_decode_change(
     ctx_ptr: *mut pg_sys::LogicalDecodingContext,
     _txn_ptr: *mut pg_sys::ReorderBufferTXN,
     relation: pg_sys::Relation,
@@ -269,7 +269,7 @@ unsafe extern "C" fn pg_decode_change(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pg_decode_shutdown(ctx_ptr: *mut pg_sys::LogicalDecodingContext) {
+unsafe extern "C-unwind" fn pg_decode_shutdown(ctx_ptr: *mut pg_sys::LogicalDecodingContext) {
     let layout = Layout::new::<DecodingState>();
     let ctx = unsafe { PgBox::from_pg(ctx_ptr) };
     unsafe { dealloc(ctx.output_plugin_private as *mut u8, layout) };

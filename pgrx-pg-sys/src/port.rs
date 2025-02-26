@@ -106,7 +106,7 @@ pub unsafe fn GetMemoryChunkContext(pointer: *mut std::os::raw::c_void) -> pg_sy
     #[cfg(any(feature = "pg16", feature = "pg17"))]
     {
         #[pgrx_macros::pg_guard]
-        extern "C" {
+        extern "C-unwind" {
             #[link_name = "GetMemoryChunkContext"]
             pub fn extern_fn(pointer: *mut std::os::raw::c_void) -> pg_sys::MemoryContext;
         }
@@ -156,9 +156,107 @@ pub fn get_pg_major_version_num() -> u16 {
     u16::from_str(super::get_pg_major_version_string()).unwrap()
 }
 
+#[cfg(any(not(target_env = "msvc"), feature = "pg17"))]
 #[inline]
 pub fn get_pg_version_string() -> &'static str {
     super::PG_VERSION_STR.to_str().unwrap()
+}
+
+#[cfg(all(
+    target_env = "msvc",
+    any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15", feature = "pg16")
+))]
+#[inline]
+pub fn get_pg_version_string() -> &'static str {
+    // bindgen cannot get value of PG_VERSION_STR
+    // PostgreSQL @0@ on @1@-@2@, compiled by @3@-@4@, @5@-bit
+    static PG_VERSION_STR: [u8; 256] = const {
+        let major = super::PG_MAJORVERSION_NUM;
+        let minor = super::PG_MINORVERSION_NUM;
+        #[cfg(target_pointer_width = "32")]
+        let pointer_width = 32_u32;
+        #[cfg(target_pointer_width = "64")]
+        let pointer_width = 64_u32;
+        // a fake value
+        let msc_ver = b"1700";
+        let mut buffer = [0u8; 256];
+        let mut pointer = 0;
+        {
+            let s = b"PostgreSQL ";
+            let mut i = 0;
+            while i < s.len() {
+                buffer[pointer + i] = s[i];
+                i += 1;
+            }
+            pointer += s.len();
+        }
+        {
+            buffer[pointer + 0] = b'0' + (major / 10) as u8;
+            buffer[pointer + 1] = b'0' + (major % 10) as u8;
+            pointer += 2;
+        }
+        {
+            let s = b".";
+            let mut i = 0;
+            while i < s.len() {
+                buffer[pointer + i] = s[i];
+                i += 1;
+            }
+            pointer += s.len();
+        }
+        if minor < 10 {
+            buffer[pointer + 0] = b'0' + (minor % 10) as u8;
+            pointer += 1;
+        } else {
+            buffer[pointer + 0] = b'0' + (minor / 10) as u8;
+            buffer[pointer + 1] = b'0' + (minor % 10) as u8;
+            pointer += 2;
+        }
+        {
+            let s = b", compiled by Visual C++ build ";
+            let mut i = 0;
+            while i < s.len() {
+                buffer[pointer + i] = s[i];
+                i += 1;
+            }
+            pointer += s.len();
+        }
+        {
+            let s = msc_ver;
+            let mut i = 0;
+            while i < s.len() {
+                buffer[pointer + i] = s[i];
+                i += 1;
+            }
+            pointer += s.len();
+        }
+        {
+            let s = b", ";
+            let mut i = 0;
+            while i < s.len() {
+                buffer[pointer + i] = s[i];
+                i += 1;
+            }
+            pointer += s.len();
+        }
+        {
+            buffer[pointer + 0] = b'0' + (pointer_width / 10) as u8;
+            buffer[pointer + 1] = b'0' + (pointer_width % 10) as u8;
+            pointer += 2;
+        }
+        {
+            let s = b"-bit";
+            let mut i = 0;
+            while i < s.len() {
+                buffer[pointer + i] = s[i];
+                i += 1;
+            }
+            pointer += s.len();
+        }
+        buffer[pointer] = 0;
+        buffer
+    };
+    unsafe { std::ffi::CStr::from_ptr(PG_VERSION_STR.as_ptr().cast()).to_str().unwrap() }
 }
 
 #[inline]
@@ -242,11 +340,11 @@ pub unsafe fn heap_tuple_get_struct<T>(htup: super::HeapTuple) -> *mut T {
 // and we route people to the old symbols they were using before on later ones.
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
 #[::pgrx_macros::pg_guard]
-extern "C" {
+extern "C-unwind" {
     pub fn planstate_tree_walker(
         planstate: *mut super::PlanState,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
@@ -254,7 +352,7 @@ extern "C" {
     pub fn query_tree_walker(
         query: *mut super::Query,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -263,7 +361,7 @@ extern "C" {
     pub fn query_or_expression_tree_walker(
         node: *mut super::Node,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -272,7 +370,7 @@ extern "C" {
     pub fn range_table_entry_walker(
         rte: *mut super::RangeTblEntry,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -281,7 +379,7 @@ extern "C" {
     pub fn range_table_walker(
         rtable: *mut super::List,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
         flags: ::core::ffi::c_int,
@@ -290,7 +388,7 @@ extern "C" {
     pub fn expression_tree_walker(
         node: *mut super::Node,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
@@ -298,7 +396,7 @@ extern "C" {
     pub fn raw_expression_tree_walker(
         node: *mut super::Node,
         walker: ::core::option::Option<
-            unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+            unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
         >,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
@@ -308,7 +406,7 @@ extern "C" {
 pub unsafe fn planstate_tree_walker(
     planstate: *mut super::PlanState,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::PlanState, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
 ) -> bool {
@@ -319,7 +417,7 @@ pub unsafe fn planstate_tree_walker(
 pub unsafe fn query_tree_walker(
     query: *mut super::Query,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -331,7 +429,7 @@ pub unsafe fn query_tree_walker(
 pub unsafe fn query_or_expression_tree_walker(
     node: *mut super::Node,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -342,7 +440,7 @@ pub unsafe fn query_or_expression_tree_walker(
 #[cfg(any(feature = "pg16", feature = "pg17"))]
 pub unsafe fn expression_tree_walker(
     node: *mut crate::Node,
-    walker: Option<unsafe extern "C" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
+    walker: Option<unsafe extern "C-unwind" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
     context: *mut ::core::ffi::c_void,
 ) -> bool {
     crate::expression_tree_walker_impl(node, walker, context)
@@ -352,7 +450,7 @@ pub unsafe fn expression_tree_walker(
 pub unsafe fn range_table_entry_walker(
     rte: *mut super::RangeTblEntry,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -364,7 +462,7 @@ pub unsafe fn range_table_entry_walker(
 pub unsafe fn range_table_walker(
     rtable: *mut super::List,
     walker: ::core::option::Option<
-        unsafe extern "C" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
+        unsafe extern "C-unwind" fn(*mut super::Node, *mut ::core::ffi::c_void) -> bool,
     >,
     context: *mut ::core::ffi::c_void,
     flags: ::core::ffi::c_int,
@@ -375,7 +473,7 @@ pub unsafe fn range_table_walker(
 #[cfg(any(feature = "pg16", feature = "pg17"))]
 pub unsafe fn raw_expression_tree_walker(
     node: *mut crate::Node,
-    walker: Option<unsafe extern "C" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
+    walker: Option<unsafe extern "C-unwind" fn(*mut crate::Node, *mut ::core::ffi::c_void) -> bool>,
     context: *mut ::core::ffi::c_void,
 ) -> bool {
     crate::raw_expression_tree_walker_impl(node, walker, context)

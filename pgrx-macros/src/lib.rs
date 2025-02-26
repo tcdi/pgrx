@@ -27,7 +27,7 @@ use sql_gen::{
 mod operators;
 mod rewriter;
 
-/// Declare a function as `#[pg_guard]` to indicate that it is called from a Postgres `extern "C"`
+/// Declare a function as `#[pg_guard]` to indicate that it is called from a Postgres `extern "C-unwind"`
 /// function so that Rust `panic!()`s (and Postgres `elog(ERROR)`s) will be properly handled by `pgrx`
 #[proc_macro_attribute]
 pub fn pg_guard(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -35,7 +35,7 @@ pub fn pg_guard(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(item as syn::Item);
 
     let res = match ast {
-        // this is for processing the members of extern "C" { } blocks
+        // this is for processing the members of extern "C-unwind" { } blocks
         // functions inside the block get wrapped as public, top-level unsafe functions that are not "extern"
         Item::ForeignMod(block) => Ok(rewriter::extern_block(block)),
 
@@ -43,7 +43,7 @@ pub fn pg_guard(_attr: TokenStream, item: TokenStream) -> TokenStream {
         Item::Fn(func) => rewriter::item_fn_without_rewrite(func),
         unknown => Err(syn::Error::new(
             unknown.span(),
-            "#[pg_guard] can only be applied to extern \"C\" blocks and top-level functions",
+            "#[pg_guard] can only be applied to extern \"C-unwind\" blocks and top-level functions",
         )),
     };
     res.unwrap_or_else(|e| e.into_compile_error()).into()

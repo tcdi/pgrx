@@ -115,7 +115,7 @@ mod pgrx_modqual_tests {
 
     #[allow(dead_code)]
     #[pg_guard]
-    extern "C" fn extern_foo_func() {}
+    extern "C-unwind" fn extern_foo_func() {}
 
     #[pg_schema]
     mod foo_schema {}

@@ -794,13 +794,12 @@ fn run_bindgen(
     let configure = pg_config.configure()?;
     let preferred_clang: Option<&std::path::Path> = configure.get("CLANG").map(|s| s.as_ref());
     eprintln!("pg_config --configure CLANG = {preferred_clang:?}");
+    let pg_target_includes = pg_target_includes(major_version, pg_config)?;
+    eprintln!("pg_target_includes = {pg_target_includes:?}");
     let (autodetect, includes) = clang::detect_include_paths_for(preferred_clang);
     let mut binder = bindgen::Builder::default();
     binder = add_blocklists(binder);
-    binder = binder
-        .allowlist_file(format!("{}.*", pg_target_include(major_version, pg_config)?))
-        .allowlist_item("PGERROR")
-        .allowlist_item("SIG.*");
+    binder = add_allowlists(binder, pg_target_includes.iter().map(|x| x.as_str()));
     binder = add_derives(binder);
     if !autodetect {
         let builtin_includes = includes.iter().filter_map(|p| Some(format!("-I{}", p.to_str()?)));
@@ -812,7 +811,7 @@ fn run_bindgen(
     let bindings = binder
         .header(include_h.display().to_string())
         .clang_args(extra_bindgen_clang_args(pg_config)?)
-        .clang_arg(format!("-I{}", pg_target_include(major_version, pg_config)?))
+        .clang_args(pg_target_includes.iter().map(|x| format!("-I{x}")))
         .detect_include_paths(autodetect)
         .parse_callbacks(Box::new(overrides))
         .default_enum_style(bindgen::EnumVariation::ModuleConsts)
@@ -832,7 +831,7 @@ fn run_bindgen(
         .wrap_static_fns_suffix("__pgrx_cshim")
         .generate()
         .wrap_err_with(|| format!("Unable to generate bindings for pg{major_version}"))?;
-    let mut binding_str = bindings.to_string();
+    let mut binding_str = bindings.to_string().replace("\"C\"", "\"C-unwind\"");
     drop(bindings); // So the Rc::into_inner can unwrap
 
     // FIXME: do this for the Node graph instead of reparsing?
@@ -867,7 +866,7 @@ fn add_blocklists(bind: bindgen::Builder) -> bindgen::Builder {
         .blocklist_var("CONFIGURE_ARGS") // configuration during build is hopefully irrelevant
         .blocklist_var("_*(?:HAVE|have)_.*") // header tracking metadata
         .blocklist_var("_[A-Z_]+_H") // more header metadata
-        // It's used by explict `extern "C"`
+        // It's used by explict `extern "C-unwind"`
         .blocklist_function("pg_re_throw")
         .blocklist_function("err(start|code|msg|detail|context_msg|hint|finish)")
         // These functions are already ported in Rust
@@ -898,6 +897,18 @@ fn add_blocklists(bind: bindgen::Builder) -> bindgen::Builder {
         .blocklist_function("varsize_any")
         // it's defined twice on Windows, so use PGERROR instead
         .blocklist_item("ERROR")
+        // it causes strange linker errors for PostgreSQL 14 on Windows
+        .blocklist_function("IsQueryIdEnabled")
+}
+
+fn add_allowlists<'a>(
+    mut bind: bindgen::Builder,
+    pg_target_includes: impl Iterator<Item = &'a str>,
+) -> bindgen::Builder {
+    for pg_target_include in pg_target_includes {
+        bind = bind.allowlist_file(format!("{}.*", regex::escape(pg_target_include)))
+    }
+    bind.allowlist_item("PGERROR").allowlist_item("SIG.*")
 }
 
 fn add_derives(bind: bindgen::Builder) -> bindgen::Builder {
@@ -947,23 +958,44 @@ fn target_env_tracked(s: &str) -> Option<String> {
     env_tracked(&format!("{s}_{target}")).or_else(|| env_tracked(s))
 }
 
-fn pg_target_include(pg_version: u16, pg_config: &PgConfig) -> eyre::Result<String> {
-    let var = "PGRX_INCLUDEDIR_SERVER";
+fn find_include(
+    pg_version: u16,
+    var: &str,
+    default: impl Fn() -> eyre::Result<PathBuf>,
+) -> eyre::Result<String> {
     let value =
         target_env_tracked(&format!("{var}_PG{pg_version}")).or_else(|| target_env_tracked(var));
     let path = match value {
         // No configured value: ask `pg_config`.
-        None => pg_config.includedir_server()?,
+        None => default()?,
         // Configured to non-empty string: pass to bindgen
         Some(overridden) => Path::new(&overridden).to_path_buf(),
     };
     let path = std::fs::canonicalize(&path)
         .wrap_err(format!("cannot find {path:?} for C header files"))?
         .join("") // returning a `/`-ending path
-        .to_str()
-        .ok_or(eyre!("{path:?} is not valid UTF-8 string"))?
+        .display()
         .to_string();
-    Ok(path)
+    if let Some(path) = path.strip_prefix("\\\\?\\") {
+        Ok(path.to_string())
+    } else {
+        Ok(path)
+    }
+}
+
+fn pg_target_includes(pg_version: u16, pg_config: &PgConfig) -> eyre::Result<Vec<String>> {
+    let mut result =
+        vec![find_include(pg_version, "PGRX_INCLUDEDIR_SERVER", || pg_config.includedir_server())?];
+    if let Some("msvc") = env_tracked("CARGO_CFG_TARGET_ENV").as_deref() {
+        result.push(find_include(pg_version, "PGRX_PKGINCLUDEDIR", || pg_config.pkgincludedir())?);
+        result.push(find_include(pg_version, "PGRX_INCLUDEDIR_SERVER_PORT_WIN32", || {
+            pg_config.includedir_server_port_win32()
+        })?);
+        result.push(find_include(pg_version, "PGRX_INCLUDEDIR_SERVER_PORT_WIN32_MSVC", || {
+            pg_config.includedir_server_port_win32_msvc()
+        })?);
+    }
+    Ok(result)
 }
 
 fn build_shim(
@@ -976,7 +1008,15 @@ fn build_shim(
     std::fs::copy(shim_src, shim_dst).unwrap();
 
     let mut build = cc::Build::new();
-    build.flag(&format!("-I{}", pg_target_include(major_version, pg_config)?));
+    if let Some("msvc") = env_tracked("CARGO_CFG_TARGET_ENV").as_deref() {
+        // without this, pgrx_embed would be linked to postgres.lib
+        build.compiler("clang");
+        build.archiver("llvm-lib");
+        build.flag("-flto=thin");
+    }
+    for pg_target_include in pg_target_includes(major_version, pg_config)?.iter() {
+        build.flag(&format!("-I{pg_target_include}"));
+    }
     for flag in extra_bindgen_clang_args(pg_config)? {
         build.flag(&flag);
     }
@@ -988,9 +1028,13 @@ fn build_shim(
 fn extra_bindgen_clang_args(pg_config: &PgConfig) -> eyre::Result<Vec<String>> {
     let mut out = vec![];
     let flags = shlex::split(&pg_config.cppflags()?.to_string_lossy()).unwrap_or_default();
-    // Just give clang the full flag set, since presumably that's what we're
-    // getting when we build the C shim anyway.
-    out.extend(flags.iter().cloned());
+    if env_tracked("CARGO_CFG_TARGET_OS").as_deref() != Some("windows") {
+        // Just give clang the full flag set, since presumably that's what we're
+        // getting when we build the C shim anyway.
+        // Skip it on Windows, since clang is used to generate cshim but MSVC is
+        // used to compile PostgreSQL.
+        out.extend(flags.iter().cloned());
+    }
     if env_tracked("CARGO_CFG_TARGET_OS").as_deref() == Some("macos") {
         // Find the `-isysroot` flags so we can warn about them, so something
         // reasonable shows up if/when the build fails.

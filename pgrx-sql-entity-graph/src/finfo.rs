@@ -33,7 +33,7 @@ pub fn finfo_v1_extern_c(
     let tokens = quote_spanned! { synthetic =>
         #[no_mangle]
         #[doc(hidden)]
-        pub unsafe extern "C" fn #wrapper_symbol(#fcinfo: ::pgrx::pg_sys::FunctionCallInfo) -> ::pgrx::pg_sys::Datum {
+        pub unsafe extern "C-unwind" fn #wrapper_symbol(#fcinfo: ::pgrx::pg_sys::FunctionCallInfo) -> ::pgrx::pg_sys::Datum {
             #contents
         }
     };

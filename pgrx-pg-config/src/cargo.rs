@@ -88,9 +88,9 @@ impl PgrxManifestExt for Manifest {
     }
 
     fn lib_filename(&self) -> eyre::Result<String> {
+        use std::env::consts::{DLL_PREFIX, DLL_SUFFIX};
         let lib_name = &self.lib_name()?;
-        let so_extension = if cfg!(target_os = "macos") { "dylib" } else { "so" };
-        Ok(format!("lib{}.{}", lib_name.replace('-', "_"), so_extension))
+        Ok(format!("{DLL_PREFIX}{}{DLL_SUFFIX}", lib_name.replace('-', "_")))
     }
 }
 

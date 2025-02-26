@@ -233,7 +233,7 @@ macro_rules! pg_magic_func {
         #[no_mangle]
         #[allow(non_snake_case, unexpected_cfgs)]
         #[doc(hidden)]
-        pub extern "C" fn Pg_magic_func() -> &'static ::pgrx::pg_sys::Pg_magic_struct {
+        pub extern "C-unwind" fn Pg_magic_func() -> &'static ::pgrx::pg_sys::Pg_magic_struct {
             static MY_MAGIC: ::pgrx::pg_sys::Pg_magic_struct = ::pgrx::pg_sys::Pg_magic_struct {
                 len: ::core::mem::size_of::<::pgrx::pg_sys::Pg_magic_struct>() as i32,
                 version: ::pgrx::pg_sys::PG_VERSION_NUM as i32 / 100,

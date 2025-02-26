@@ -29,7 +29,7 @@ use std::time::Duration;
 ::pgrx::pg_module_magic!();
 
 #[pg_guard]
-pub extern "C" fn _PG_init() {
+pub extern "C-unwind" fn _PG_init() {
     BackgroundWorkerBuilder::new("Background Worker Example")
         .set_function("background_worker_main")
         .set_library("bgworker")
@@ -40,7 +40,7 @@ pub extern "C" fn _PG_init() {
 
 #[pg_guard]
 #[no_mangle]
-pub extern "C" fn background_worker_main(arg: pg_sys::Datum) {
+pub extern "C-unwind" fn background_worker_main(arg: pg_sys::Datum) {
     let arg = unsafe { i32::from_polymorphic_datum(arg, false, pg_sys::INT4OID) };
 
     // these are the signals we want to receive.  If we don't attach the SIGTERM handler, then

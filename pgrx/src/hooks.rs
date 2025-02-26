@@ -246,7 +246,7 @@ pub unsafe fn register_hook(hook: &'static mut (dyn PgHooks)) {
     });
 
     #[pg_guard]
-    unsafe extern "C" fn xact_callback(event: pg_sys::XactEvent::Type, _data: void_mut_ptr) {
+    unsafe extern "C-unwind" fn xact_callback(event: pg_sys::XactEvent::Type, _data: void_mut_ptr) {
         match event {
             pg_sys::XactEvent::XACT_EVENT_ABORT => HOOKS.as_mut().unwrap().current_hook.abort(),
             pg_sys::XactEvent::XACT_EVENT_PRE_COMMIT => {
@@ -260,7 +260,7 @@ pub unsafe fn register_hook(hook: &'static mut (dyn PgHooks)) {
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_executor_start(query_desc: *mut pg_sys::QueryDesc, eflags: i32) {
+unsafe extern "C-unwind" fn pgrx_executor_start(query_desc: *mut pg_sys::QueryDesc, eflags: i32) {
     fn prev(query_desc: PgBox<pg_sys::QueryDesc>, eflags: i32) -> HookResult<()> {
         unsafe {
             (HOOKS.as_mut().unwrap().prev_executor_start_hook.as_ref().unwrap())(
@@ -275,7 +275,7 @@ unsafe extern "C" fn pgrx_executor_start(query_desc: *mut pg_sys::QueryDesc, efl
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_executor_run(
+unsafe extern "C-unwind" fn pgrx_executor_run(
     query_desc: *mut pg_sys::QueryDesc,
     direction: pg_sys::ScanDirection::Type,
     count: u64,
@@ -302,7 +302,7 @@ unsafe extern "C" fn pgrx_executor_run(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_executor_finish(query_desc: *mut pg_sys::QueryDesc) {
+unsafe extern "C-unwind" fn pgrx_executor_finish(query_desc: *mut pg_sys::QueryDesc) {
     fn prev(query_desc: PgBox<pg_sys::QueryDesc>) -> HookResult<()> {
         unsafe {
             (HOOKS.as_mut().unwrap().prev_executor_finish_hook.as_ref().unwrap())(
@@ -316,7 +316,7 @@ unsafe extern "C" fn pgrx_executor_finish(query_desc: *mut pg_sys::QueryDesc) {
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_executor_end(query_desc: *mut pg_sys::QueryDesc) {
+unsafe extern "C-unwind" fn pgrx_executor_end(query_desc: *mut pg_sys::QueryDesc) {
     fn prev(query_desc: PgBox<pg_sys::QueryDesc>) -> HookResult<()> {
         unsafe {
             (HOOKS.as_mut().unwrap().prev_executor_end_hook.as_ref().unwrap())(query_desc.into_pg())
@@ -329,7 +329,7 @@ unsafe extern "C" fn pgrx_executor_end(query_desc: *mut pg_sys::QueryDesc) {
 
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_executor_check_perms(
+unsafe extern "C-unwind" fn pgrx_executor_check_perms(
     range_table: *mut pg_sys::List,
     ereport_on_violation: bool,
 ) -> bool {
@@ -351,7 +351,7 @@ unsafe extern "C" fn pgrx_executor_check_perms(
 
 #[cfg(any(feature = "pg16", feature = "pg17"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_executor_check_perms(
+unsafe extern "C-unwind" fn pgrx_executor_check_perms(
     range_table: *mut pg_sys::List,
     rte_perm_infos: *mut pg_sys::List,
     ereport_on_violation: bool,
@@ -381,7 +381,7 @@ unsafe extern "C" fn pgrx_executor_check_perms(
 
 #[cfg(any(feature = "pg12", feature = "pg13"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_process_utility(
+unsafe extern "C-unwind" fn pgrx_process_utility(
     pstmt: *mut pg_sys::PlannedStmt,
     query_string: *const ::std::os::raw::c_char,
     context: pg_sys::ProcessUtilityContext::Type,
@@ -429,7 +429,7 @@ unsafe extern "C" fn pgrx_process_utility(
 }
 #[cfg(any(feature = "pg14", feature = "pg15", feature = "pg16", feature = "pg17"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_process_utility(
+unsafe extern "C-unwind" fn pgrx_process_utility(
     pstmt: *mut pg_sys::PlannedStmt,
     query_string: *const ::std::os::raw::c_char,
     read_only_tree: bool,
@@ -480,7 +480,7 @@ unsafe extern "C" fn pgrx_process_utility(
 
 #[cfg(feature = "pg12")]
 #[pg_guard]
-unsafe extern "C" fn pgrx_planner(
+unsafe extern "C-unwind" fn pgrx_planner(
     parse: *mut pg_sys::Query,
     cursor_options: i32,
     bound_params: pg_sys::ParamListInfo,
@@ -496,7 +496,7 @@ unsafe extern "C" fn pgrx_planner(
     feature = "pg17"
 ))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_planner(
+unsafe extern "C-unwind" fn pgrx_planner(
     parse: *mut pg_sys::Query,
     query_string: *const ::std::os::raw::c_char,
     cursor_options: i32,
@@ -506,7 +506,7 @@ unsafe extern "C" fn pgrx_planner(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_planner_impl(
+unsafe extern "C-unwind" fn pgrx_planner_impl(
     parse: *mut pg_sys::Query,
     query_string: *const ::std::os::raw::c_char,
     cursor_options: i32,
@@ -558,7 +558,7 @@ unsafe extern "C" fn pgrx_planner_impl(
 
 #[cfg(any(feature = "pg12", feature = "pg13"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_post_parse_analyze(
+unsafe extern "C-unwind" fn pgrx_post_parse_analyze(
     parse_state: *mut pg_sys::ParseState,
     query: *mut pg_sys::Query,
 ) {
@@ -581,7 +581,7 @@ unsafe extern "C" fn pgrx_post_parse_analyze(
 
 #[cfg(any(feature = "pg14", feature = "pg15", feature = "pg16", feature = "pg17"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_post_parse_analyze(
+unsafe extern "C-unwind" fn pgrx_post_parse_analyze(
     parse_state: *mut pg_sys::ParseState,
     query: *mut pg_sys::Query,
     jumble_state: *mut JumbleState,
@@ -612,7 +612,7 @@ unsafe extern "C" fn pgrx_post_parse_analyze(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_emit_log(error_data: *mut pg_sys::ErrorData) {
+unsafe extern "C-unwind" fn pgrx_emit_log(error_data: *mut pg_sys::ErrorData) {
     fn prev(error_data: PgBox<pg_sys::ErrorData>) -> HookResult<()> {
         HookResult::new(unsafe {
             match HOOKS.as_mut().unwrap().prev_emit_log_hook.as_ref() {
@@ -627,7 +627,7 @@ unsafe extern "C" fn pgrx_emit_log(error_data: *mut pg_sys::ErrorData) {
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_executor_start_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_executor_start_wrapper(
     query_desc: *mut pg_sys::QueryDesc,
     eflags: i32,
 ) {
@@ -635,7 +635,7 @@ unsafe extern "C" fn pgrx_standard_executor_start_wrapper(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_executor_run_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_executor_run_wrapper(
     query_desc: *mut pg_sys::QueryDesc,
     direction: pg_sys::ScanDirection::Type,
     count: u64,
@@ -645,18 +645,20 @@ unsafe extern "C" fn pgrx_standard_executor_run_wrapper(
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_executor_finish_wrapper(query_desc: *mut pg_sys::QueryDesc) {
+unsafe extern "C-unwind" fn pgrx_standard_executor_finish_wrapper(
+    query_desc: *mut pg_sys::QueryDesc,
+) {
     pg_sys::standard_ExecutorFinish(query_desc)
 }
 
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_executor_end_wrapper(query_desc: *mut pg_sys::QueryDesc) {
+unsafe extern "C-unwind" fn pgrx_standard_executor_end_wrapper(query_desc: *mut pg_sys::QueryDesc) {
     pg_sys::standard_ExecutorEnd(query_desc)
 }
 
 #[cfg(any(feature = "pg12", feature = "pg13", feature = "pg14", feature = "pg15"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_executor_check_perms_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_executor_check_perms_wrapper(
     _range_table: *mut pg_sys::List,
     _ereport_on_violation: bool,
 ) -> bool {
@@ -665,7 +667,7 @@ unsafe extern "C" fn pgrx_standard_executor_check_perms_wrapper(
 
 #[cfg(any(feature = "pg16", feature = "pg17"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_executor_check_perms_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_executor_check_perms_wrapper(
     _range_table: *mut pg_sys::List,
     _rte_perm_infos: *mut pg_sys::List,
     _ereport_on_violation: bool,
@@ -675,7 +677,7 @@ unsafe extern "C" fn pgrx_standard_executor_check_perms_wrapper(
 
 #[cfg(any(feature = "pg12", feature = "pg13"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_process_utility_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_process_utility_wrapper(
     pstmt: *mut pg_sys::PlannedStmt,
     query_string: *const ::std::os::raw::c_char,
     context: pg_sys::ProcessUtilityContext::Type,
@@ -697,7 +699,7 @@ unsafe extern "C" fn pgrx_standard_process_utility_wrapper(
 
 #[cfg(any(feature = "pg14", feature = "pg15", feature = "pg16", feature = "pg17"))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_process_utility_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_process_utility_wrapper(
     pstmt: *mut pg_sys::PlannedStmt,
     query_string: *const ::std::os::raw::c_char,
     read_only_tree: bool,
@@ -721,7 +723,7 @@ unsafe extern "C" fn pgrx_standard_process_utility_wrapper(
 
 #[cfg(feature = "pg12")]
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_planner_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_planner_wrapper(
     parse: *mut pg_sys::Query,
     cursor_options: i32,
     bound_params: pg_sys::ParamListInfo,
@@ -737,7 +739,7 @@ unsafe extern "C" fn pgrx_standard_planner_wrapper(
     feature = "pg17"
 ))]
 #[pg_guard]
-unsafe extern "C" fn pgrx_standard_planner_wrapper(
+unsafe extern "C-unwind" fn pgrx_standard_planner_wrapper(
     parse: *mut pg_sys::Query,
     query_string: *const ::std::os::raw::c_char,
     cursor_options: i32,

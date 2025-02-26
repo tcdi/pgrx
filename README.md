@@ -63,7 +63,7 @@
    + Safe access to Postgres' `MemoryContext` system via `pgrx::PgMemoryContexts`
    + Executor/planner/transaction/subtransaction hooks
    + Safely use Postgres-provided pointers with `pgrx::PgBox<T>` (akin to `alloc::boxed::Box<T>`)
-   + `#[pg_guard]` proc-macro for guarding `extern "C"` Rust functions that need to be passed into Postgres
+   + `#[pg_guard]` proc-macro for guarding `extern "C-unwind"` Rust functions that need to be passed into Postgres
    + Access Postgres' logging system through `eprintln!`-like macros
    + Direct `unsafe` access to large parts of Postgres internals via the `pgrx::pg_sys` module
    + New features added regularly!
